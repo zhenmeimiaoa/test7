@@ -223,9 +223,9 @@ class MainActivity : AppCompatActivity() {
                     if (message == "Success") {
                         val isMatch = score >= 60.0
                         val resultText = if (isMatch) {
-                            "是同一人（相似度：${"%.1f".format(score)}%）"
+                            "鏄悓涓€浜猴紙鐩镐技搴︼細${"%.1f".format(score)}%锛?
                         } else {
-                            "不是同一人（相似度：${"%.1f".format(score)}%）"
+                            "涓嶆槸鍚屼竴浜猴紙鐩镐技搴︼細${"%.1f".format(score)}%锛?
                         }
                         tvResult.text = resultText
                         tvResult.setBackgroundColor(
@@ -233,12 +233,12 @@ class MainActivity : AppCompatActivity() {
                             else android.graphics.Color.parseColor("#F44336")
                         )
                         tvStatus.text = "Verification completed"
-                        LogActivity.addLog("Face", "结果: $resultText")
+                        LogActivity.addLog("Face", "缁撴灉: $resultText")
                     } else {
                         tvResult.text = "Error: $message"
                         tvResult.setBackgroundColor(android.graphics.Color.parseColor("#FFC107"))
                         tvStatus.text = "Verification failed"
-                        LogActivity.addLog("ERROR", "API错误: $message")
+                        LogActivity.addLog("ERROR", "API閿欒: $message")
                     }
                 }
                 
