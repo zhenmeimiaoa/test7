@@ -52,7 +52,7 @@ class IDCardOCRHelper {
             "Timestamp" to getTimestamp(),
             "SignatureVersion" to "1.0",
             "SignatureNonce" to UUID.randomUUID().toString(),
-            "ImageURL" to imageBase64
+            "body" to imageBase64
         )
         
         val signature = calculateSignature(params, accessKeySecret)
@@ -76,14 +76,16 @@ class IDCardOCRHelper {
             val json = JSONObject(body)
             if (json.has("Data")) {
                 val data = json.getJSONObject("Data")
-                val frontResult = data.optJSONObject("FrontResult")
+                val faceData = data.optJSONObject("face")
                 
-                if (frontResult != null) {
+                if (faceData != null) {
+                    val dataObj = faceData.optJSONObject("data")
+                    
                     IDCardInfo(
-                        name = frontResult.optString("Name", ""),
-                        idNumber = frontResult.optString("IDNumber", ""),
-                        gender = frontResult.optString("Gender", ""),
-                        address = frontResult.optString("Address", "")
+                        name = dataObj?.optString("name", "") ?: "",
+                        idNumber = dataObj?.optString("idNumber", "") ?: "",
+                        gender = dataObj?.optString("sex", "") ?: "",
+                        address = dataObj?.optString("address", "") ?: ""
                     )
                 } else {
                     null
