@@ -11,14 +11,19 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
+import java.util.concurrent.TimeUnit
 
 class IDCardOCRHelper {
     
     private val TAG = "BaiduOCR"
-    private val API_KEY = "Su4BMNAumYZWBzJbuI1wASF"
-    private val SECRET_KEY = "Zyw7FNQ3EvobHqy41ZxloTnLQYcVW83K"
+    private val API_KEY = "Su4BMNAumYZWBzJbuiL1wASF"
+    private val SECRET_KEY = "2yw7FNQ3EvobHqy41ZxIoTnLQYcVW83K"
     
-    private val client = OkHttpClient.Builder().build()
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .build()
+    
     private var accessToken: String? = null
     
     suspend fun recognizeIDCard(bitmap: Bitmap): IDCardInfo? {
@@ -26,7 +31,7 @@ class IDCardOCRHelper {
             try {
                 if (accessToken == null) {
                     accessToken = getAccessToken()
-                    Log.d(TAG, "Got access token: ${accessToken?.take(10)}...")
+                    Log.d(TAG, "Got token: ${accessToken?.take(10)}...")
                 }
                 
                 if (accessToken == null) {
@@ -38,7 +43,7 @@ class IDCardOCRHelper {
                 Log.d(TAG, "Image base64 length: ${imageBase64.length}")
                 
                 val result = callBaiduOCR(imageBase64)
-                Log.d(TAG, "OCR Result: $result")
+                Log.d(TAG, "OCR result: $result")
                 result
                 
             } catch (e: Exception) {
@@ -54,20 +59,22 @@ class IDCardOCRHelper {
                 "&client_id=$API_KEY" +
                 "&client_secret=$SECRET_KEY"
         
-        val request = Request.Builder()
-            .url(url)
-            .post(FormBody.Builder().build())
-            .build()
-        
         return try {
+            val request = Request.Builder()
+                .url(url)
+                .post(FormBody.Builder().build())
+                .build()
+            
             val response = client.newCall(request).execute()
             val body = response.body?.string()
+            
             Log.d(TAG, "Token response: $body")
             
             if (body == null) return null
             
             val json = JSONObject(body)
             val token = json.optString("access_token")
+            
             if (token.isEmpty()) {
                 Log.e(TAG, "Empty token in response")
                 null
@@ -93,7 +100,6 @@ class IDCardOCRHelper {
         val request = Request.Builder()
             .url(url)
             .post(formBody)
-            .addHeader("Content-Type", "application/x-www-form-urlencoded")
             .build()
         
         return try {
