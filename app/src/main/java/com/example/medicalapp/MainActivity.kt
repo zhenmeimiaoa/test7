@@ -150,7 +150,7 @@ class MainActivity : AppCompatActivity() {
                         
                         // 直接在这里调用百度 OCR
                         val API_KEY = "Su4BMNAumYZWBzJbuiL1wASF"
-                        val SECRET_KEY = "Zyw7FNQ3EvobHqy41ZxIoTnLQYcVW83K"
+                        val SECRET_KEY = "2yw7FNQ3EvobHqy41ZxIoTnLQYcVW83K"
                         
                         // 1. 获取 token
                         val tokenUrl = "https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=$API_KEY&client_secret=$SECRET_KEY"
@@ -359,5 +359,6 @@ class MainActivity : AppCompatActivity() {
         scope.cancel()
     }
 }
+
 
 
