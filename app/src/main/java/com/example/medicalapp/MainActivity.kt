@@ -142,9 +142,20 @@ class MainActivity : AppCompatActivity() {
                 tvStatus.text = "Recognizing..."
                 LogActivity.addLog("OCR", "Starting OCR recognition")
                 
+                LogActivity.addLog("OCR", "Calling ocrHelper.recognizeIDCard...")
                 val info = withContext(Dispatchers.IO) {
-                    ocrHelper?.recognizeIDCard(bitmap)
+                    try {
+                        val result = ocrHelper?.recognizeIDCard(bitmap)
+                        LogActivity.addLog("OCR", "recognizeIDCard returned: $result")
+                        result
+                    } catch (e: Exception) {
+                        LogActivity.addLog("OCR", "Exception in recognizeIDCard: ${e.message}")
+                        LogActivity.addLog("OCR", "Stack trace: ${e.stackTraceToString()}")
+                        null
+                    }
                 }
+                
+                LogActivity.addLog("OCR", "info is null: ${info == null}")
                 
                 if (info != null) {
                     fillForm(info)
@@ -272,3 +283,4 @@ class MainActivity : AppCompatActivity() {
         scope.cancel()
     }
 }
+
