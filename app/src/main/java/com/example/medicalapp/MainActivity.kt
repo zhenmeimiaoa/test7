@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -30,15 +31,16 @@ class MainActivity : AppCompatActivity() {
     private val PICK_IMAGE = 100
     private val FACE_CAPTURE = 101
     
-    private lateinit var idCardImage: ImageView
-    private lateinit var nameInput: TextView
-    private lateinit var idNumberInput: TextView
-    private lateinit var genderInput: TextView
-    private lateinit var addressInput: TextView
-    private lateinit var verifyButton: Button
-    private lateinit var faceVerifyButton: Button
-    private lateinit var logsButton: Button
-    private lateinit var statusText: TextView
+    private lateinit var ivIdCard: ImageView
+    private lateinit var etName: EditText
+    private lateinit var etIdNumber: EditText
+    private lateinit var etGender: EditText
+    private lateinit var etAddress: EditText
+    private lateinit var btnFaceCompare: Button
+    private lateinit var btnLogs: Button
+    private lateinit var tvStatus: TextView
+    private lateinit var tvResult: TextView
+    private lateinit var layoutUpload: android.widget.LinearLayout
     
     private var ocrHelper: IDCardOCRHelper? = null
     private var aliyunFaceHelper: AliyunFaceHelper? = null
@@ -59,29 +61,30 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun initViews() {
-        idCardImage = findViewById(R.id.idCardImage)
-        nameInput = findViewById(R.id.nameInput)
-        idNumberInput = findViewById(R.id.idNumberInput)
-        genderInput = findViewById(R.id.genderInput)
-        addressInput = findViewById(R.id.addressInput)
-        verifyButton = findViewById(R.id.verifyButton)
-        faceVerifyButton = findViewById(R.id.faceVerifyButton)
-        logsButton = findViewById(R.id.logsButton)
-        statusText = findViewById(R.id.statusText)
+        ivIdCard = findViewById(R.id.ivIdCard)
+        etName = findViewById(R.id.etName)
+        etIdNumber = findViewById(R.id.etIdNumber)
+        etGender = findViewById(R.id.etGender)
+        etAddress = findViewById(R.id.etAddress)
+        btnFaceCompare = findViewById(R.id.btnFaceCompare)
+        btnLogs = findViewById(R.id.btnLogs)
+        tvStatus = findViewById(R.id.tvStatus)
+        tvResult = findViewById(R.id.tvResult)
+        layoutUpload = findViewById(R.id.layoutUpload)
         
-        idCardImage.setOnClickListener {
+        layoutUpload.setOnClickListener {
             openGallery()
         }
         
-        verifyButton.setOnClickListener {
+        ivIdCard.setOnClickListener {
+            openGallery()
+        }
+        
+        btnFaceCompare.setOnClickListener {
             startFaceVerification()
         }
         
-        faceVerifyButton.setOnClickListener {
-            startFaceVerification()
-        }
-        
-        logsButton.setOnClickListener {
+        btnLogs.setOnClickListener {
             startActivity(Intent(this, LogActivity::class.java))
         }
     }
@@ -138,11 +141,11 @@ class MainActivity : AppCompatActivity() {
                 
                 bitmap?.let {
                     currentIdCardBitmap = it
-                    idCardImage.setImageBitmap(it)
+                    ivIdCard.setImageBitmap(it)
+                    layoutUpload.visibility = android.view.View.GONE
                     
                     LogActivity.addLog("OCR", "Starting OCR recognition")
                     
-                    // 内联百度 OCR
                     val info = withContext(Dispatchers.IO) {
                         performBaiduOCR(it)
                     }
@@ -150,17 +153,18 @@ class MainActivity : AppCompatActivity() {
                     if (info != null) {
                         currentIdCardInfo = info
                         displayIDCardInfo(info)
-                        statusText.text = "ID Card recognized successfully"
+                        tvStatus.text = "ID Card recognized successfully"
+                        btnFaceCompare.isEnabled = true
                         LogActivity.addLog("OCR", "Recognition successful: ${info.name}")
                     } else {
-                        statusText.text = "OCR failed. Please input manually."
+                        tvStatus.text = "OCR failed. Please input manually."
                         LogActivity.addLog("OCR", "Failed to recognize")
                     }
                 }
                 
             } catch (e: Exception) {
                 LogActivity.addLog("OCR", "Exception: ${e.message}")
-                statusText.text = "Error loading image"
+                tvStatus.text = "Error loading image"
             }
         }
     }
@@ -169,7 +173,6 @@ class MainActivity : AppCompatActivity() {
         try {
             LogActivity.addLog("OCR", "Starting inline Baidu OCR...")
             
-            // 1. 获取 token
             val tokenUrl = "https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=$API_KEY&client_secret=$SECRET_KEY"
             val tokenRequest = Request.Builder()
                 .url(tokenUrl)
@@ -188,13 +191,11 @@ class MainActivity : AppCompatActivity() {
             }
             LogActivity.addLog("OCR", "Got token: ${token.take(20)}...")
             
-            // 2. 转换图片
             val outputStream = ByteArrayOutputStream()
             bitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)
             val imageBase64 = android.util.Base64.encodeToString(outputStream.toByteArray(), android.util.Base64.NO_WRAP)
             LogActivity.addLog("OCR", "Image base64 length: ${imageBase64.length}")
             
-            // 3. 调用 OCR
             val ocrUrl = "https://aip.baidubce.com/rest/2.0/ocr/v1/idcard?access_token=$token&id_card_side=front"
             val ocrBody = FormBody.Builder()
                 .add("image", imageBase64)
@@ -211,7 +212,6 @@ class MainActivity : AppCompatActivity() {
             val ocrResult = ocrResponse.body?.string()
             LogActivity.addLog("OCR", "OCR response received")
             
-            // 4. 解析结果 - 使用字符串提取绕过中文键名问题
             return parseOCRResult(ocrResult ?: "")
             
         } catch (e: Exception) {
@@ -222,9 +222,7 @@ class MainActivity : AppCompatActivity() {
     
     private fun parseOCRResult(jsonStr: String): IDCardInfo? {
         try {
-            // 直接用正则表达式提取字段值
             fun extractField(fieldName: String): String {
-                // 匹配 "字段名":{"words":"值"}
                 val pattern = "\"$fieldName\":\\s*\\{[^}]*\"words\":\\s*\"([^\"]*)\""
                 val regex = Regex(pattern)
                 val match = regex.find(jsonStr)
@@ -257,10 +255,10 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun displayIDCardInfo(info: IDCardInfo) {
-        nameInput.text = info.name
-        idNumberInput.text = info.idNumber
-        genderInput.text = info.gender
-        addressInput.text = info.address
+        etName.setText(info.name)
+        etIdNumber.setText(info.idNumber)
+        etGender.setText(info.gender)
+        etAddress.setText(info.address)
     }
     
     private fun performFaceVerification(faceBitmap: Bitmap) {
@@ -283,17 +281,20 @@ class MainActivity : AppCompatActivity() {
                     
                     if (it.isSamePerson) {
                         val similarity = (it.confidenceScore * 100).toInt()
-                        statusText.text = "SAME PERSON (Similarity: $similarity%)"
+                        tvResult.text = "SAME PERSON (Similarity: $similarity%)"
+                        tvResult.setBackgroundColor(android.graphics.Color.GREEN)
                         LogActivity.addLog("Face", "Result: SAME PERSON (Similarity: $similarity%)")
                     } else {
-                        statusText.text = "DIFFERENT PERSON"
+                        tvResult.text = "DIFFERENT PERSON"
+                        tvResult.setBackgroundColor(android.graphics.Color.RED)
                         LogActivity.addLog("Face", "Result: DIFFERENT PERSON")
                     }
+                    tvResult.visibility = android.view.View.VISIBLE
                 }
                 
             } catch (e: Exception) {
                 LogActivity.addLog("Face", "Exception: ${e.message}")
-                statusText.text = "Face verification error"
+                tvStatus.text = "Face verification error"
             }
         }
     }
