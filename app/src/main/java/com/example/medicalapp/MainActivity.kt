@@ -299,7 +299,7 @@ class MainActivity : AppCompatActivity() {
             
             if (name.isEmpty() && idNumber.isEmpty()) return null
             
-            return IDCardInfo(name, idNumber, gender, address)
+            return IDCardInfo(name=name, idNumber=idNumber, gender=gender, nation=nation, address=address)
             
         } catch (e: Exception) {
             LogActivity.addLog("OCR", "Parse error: ${e.message}")
@@ -354,4 +354,6 @@ class MainActivity : AppCompatActivity() {
         aliyunFaceHelper?.close()
     }
 }
+
+
 
