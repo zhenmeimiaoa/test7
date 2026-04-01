@@ -3,7 +3,6 @@
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
@@ -18,7 +17,6 @@ import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.*
-import java.io.ByteArrayOutputStream
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -33,7 +31,7 @@ class FaceCaptureActivity : AppCompatActivity() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     
     companion object {
-        // 锟斤拷态锟斤拷锟斤拷锟斤拷锟斤拷 Bitmap锟斤拷锟斤拷锟斤拷 Intent 锟斤拷小锟斤拷锟狡ｏ拷
+        // 静态变量传递 Bitmap（避免 Intent 大小限制）
         var capturedFaceBitmap: Bitmap? = null
     }
 
@@ -47,7 +45,7 @@ class FaceCaptureActivity : AppCompatActivity() {
         
         cameraExecutor = Executors.newSingleThreadExecutor()
         
-        // 锟斤拷锟街帮拷锟?Bitmap
+        // 清空之前的 Bitmap
         capturedFaceBitmap = null
         
         if (checkPermissions()) {
@@ -92,7 +90,7 @@ class FaceCaptureActivity : AppCompatActivity() {
                 tvHint.text = "Please look at camera and tap Capture"
                 
             } catch (exc: Exception) {
-                tvHint.text = "Camera error: ${exc.message}"
+                tvHint.text = "Camera error: "
             }
         }, ContextCompat.getMainExecutor(this))
     }
@@ -113,9 +111,10 @@ class FaceCaptureActivity : AppCompatActivity() {
                             val bytes = ByteArray(buffer.remaining())
                             buffer.get(bytes)
                             
-                            // 鍘嬬缉鍥惧儚浠ュ噺灏戝唴瀛樹娇鐢?                            val bitmap = withContext(Dispatchers.Default) {
+                            // 压缩图片避免内存问题
+                            val bitmap = withContext(Dispatchers.Default) {
                                 val original = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                                // 鍘嬬缉鍒?640x480 澶у皬
+                                // 压缩到 640x480 左右
                                 val scaled = Bitmap.createScaledBitmap(original, 640, 480, true)
                                 if (original != scaled) original.recycle()
                                 scaled
@@ -123,17 +122,17 @@ class FaceCaptureActivity : AppCompatActivity() {
                             
                             image.close()
                             
-                            // 淇濆瓨鍒伴潤鎬佸彉閲?                            capturedFaceBitmap = bitmap
+                            // 保存到静态变量
+                            capturedFaceBitmap = bitmap
                             
-                            // 鍒涘缓杩斿洖鎰忓浘
-                            val intent = Intent()
-                            intent.putExtra("face_bitmap", bitmap)
-                            setResult(RESULT_OK, intent)
-                            finish()
+                            withContext(Dispatchers.Main) {
+                                setResult(RESULT_OK)
+                                finish()
+                            }
                             
                         } catch (e: Exception) {
                             withContext(Dispatchers.Main) {
-                                tvHint.text = "Error: ${e.message}"
+                                tvHint.text = "Error: "
                                 btnCapture.isEnabled = true
                             }
                         }
@@ -141,7 +140,7 @@ class FaceCaptureActivity : AppCompatActivity() {
                 }
 
                 override fun onError(exception: ImageCaptureException) {
-                    tvHint.text = "Capture failed: ${exception.message}"
+                    tvHint.text = "Capture failed: "
                     btnCapture.isEnabled = true
                 }
             }
@@ -164,4 +163,3 @@ class FaceCaptureActivity : AppCompatActivity() {
         scope.cancel()
     }
 }
-
