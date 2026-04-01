@@ -293,6 +293,7 @@ class MainActivity : AppCompatActivity() {
             val name = wordsResult.optJSONObject("姓名")?.optString("words", "") ?: ""
             val idNumber = wordsResult.optJSONObject("公民身份号码")?.optString("words", "") ?: ""
             val gender = wordsResult.optJSONObject("性别")?.optString("words", "") ?: ""
+            val nation = wordsResult.optJSONObject("民族")?.optString("words", "") ?: ""
             val address = wordsResult.optJSONObject("住址")?.optString("words", "") ?: ""
             
             LogActivity.addLog("OCR", "Got name='$name' id='$idNumber'")
@@ -354,6 +355,7 @@ class MainActivity : AppCompatActivity() {
         aliyunFaceHelper?.close()
     }
 }
+
 
 
 
