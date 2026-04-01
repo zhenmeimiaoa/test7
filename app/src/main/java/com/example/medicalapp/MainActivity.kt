@@ -101,7 +101,7 @@ class MainActivity : AppCompatActivity() {
     
     private fun startFaceVerification() {
         if (currentIdCardInfo == null) {
-            Toast.makeText(this, "请先上传身份证照片", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Please upload ID card first", Toast.LENGTH_SHORT).show()
             return
         }
         
@@ -154,6 +154,7 @@ class MainActivity : AppCompatActivity() {
                         displayIDCardInfo(info)
                         tvStatus.text = "ID Card recognized successfully"
                         btnFaceCompare.isEnabled = true
+                        btnFaceCompare.alpha = 1.0f
                         LogActivity.addLog("OCR", "Recognition successful: ${info.name}")
                     } else {
                         tvStatus.text = "OCR failed. Please input manually."
@@ -221,26 +222,23 @@ class MainActivity : AppCompatActivity() {
     
     private fun parseOCRResult(jsonStr: String): IDCardInfo? {
         try {
-            // 直接用字符串查找（绕过中文键名问题）
-            fun extractField(fieldName: String): String {
-                val keyPattern = "\"$fieldName\":{\"words\":\""
-                val startIdx = jsonStr.indexOf(keyPattern)
-                if (startIdx == -1) {
-                    LogActivity.addLog("OCR", "Field '$fieldName' not found in JSON")
-                    return ""
-                }
-                
-                val valueStart = startIdx + keyPattern.length
-                val valueEnd = jsonStr.indexOf("\"", valueStart)
-                if (valueEnd == -1) return ""
-                
-                return jsonStr.substring(valueStart, valueEnd)
+            // 鍏抽敭淇锛氱洿鎺ョ敤瀛楃涓叉煡鎵撅紝閬垮厤涓枃鍙橀噺
+            val nameIdx = jsonStr.indexOf("\"濮撳悕\":{\"words\":\"")
+            val idIdx = jsonStr.indexOf("\"鍏皯韬唤鍙风爜\":{\"words\":\"")
+            val genderIdx = jsonStr.indexOf("\"鎬у埆\":{\"words\":\"")
+            val addrIdx = jsonStr.indexOf("\"浣忓潃\":{\"words\":\"")
+            
+            fun extractValue(idx: Int): String {
+                if (idx == -1) return ""
+                val start = idx + 13  // 璺宠繃鍓嶇紑闀垮害
+                val end = jsonStr.indexOf("\"", start)
+                return if (end == -1) "" else jsonStr.substring(start, end)
             }
             
-            val name = extractField("姓名")
-            val idNumber = extractField("公民身份号码")
-            val gender = extractField("性别")
-            val address = extractField("住址")
+            val name = extractValue(nameIdx)
+            val idNumber = extractValue(idIdx)
+            val gender = extractValue(genderIdx)
+            val address = extractValue(addrIdx)
             
             LogActivity.addLog("OCR", "Extracted - Name: '$name', ID: '$idNumber', Gender: '$gender'")
             
@@ -315,8 +313,3 @@ class MainActivity : AppCompatActivity() {
         aliyunFaceHelper?.close()
     }
 }
-
-
-
-
-
