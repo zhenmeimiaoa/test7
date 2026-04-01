@@ -1,8 +1,9 @@
-package com.example.medicalapp
+﻿package com.example.medicalapp
 
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
@@ -32,7 +33,7 @@ class FaceCaptureActivity : AppCompatActivity() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     
     companion object {
-        // ��̬�������� Bitmap������ Intent ��С���ƣ�
+        // 锟斤拷态锟斤拷锟斤拷锟斤拷锟斤拷 Bitmap锟斤拷锟斤拷锟斤拷 Intent 锟斤拷小锟斤拷锟狡ｏ拷
         var capturedFaceBitmap: Bitmap? = null
     }
 
@@ -46,7 +47,7 @@ class FaceCaptureActivity : AppCompatActivity() {
         
         cameraExecutor = Executors.newSingleThreadExecutor()
         
-        // ���֮ǰ�� Bitmap
+        // 锟斤拷锟街帮拷锟?Bitmap
         capturedFaceBitmap = null
         
         if (checkPermissions()) {
@@ -112,10 +113,9 @@ class FaceCaptureActivity : AppCompatActivity() {
                             val bytes = ByteArray(buffer.remaining())
                             buffer.get(bytes)
                             
-                            // 压缩图像以减少内存使用
-                            val bitmap = withContext(Dispatchers.Default) {
+                            // 鍘嬬缉鍥惧儚浠ュ噺灏戝唴瀛樹娇鐢?                            val bitmap = withContext(Dispatchers.Default) {
                                 val original = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                                // 压缩到 640x480 大小
+                                // 鍘嬬缉鍒?640x480 澶у皬
                                 val scaled = Bitmap.createScaledBitmap(original, 640, 480, true)
                                 if (original != scaled) original.recycle()
                                 scaled
@@ -123,10 +123,9 @@ class FaceCaptureActivity : AppCompatActivity() {
                             
                             image.close()
                             
-                            // 保存到静态变量
-                            capturedFaceBitmap = bitmap
+                            // 淇濆瓨鍒伴潤鎬佸彉閲?                            capturedFaceBitmap = bitmap
                             
-                            // 创建返回意图
+                            // 鍒涘缓杩斿洖鎰忓浘
                             val intent = Intent()
                             intent.putExtra("face_bitmap", bitmap)
                             setResult(RESULT_OK, intent)
@@ -165,3 +164,4 @@ class FaceCaptureActivity : AppCompatActivity() {
         scope.cancel()
     }
 }
+
