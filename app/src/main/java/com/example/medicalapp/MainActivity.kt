@@ -134,19 +134,33 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun startFaceVerification() {
-        LogActivity.addLog("Main", "Face verification started, info=")
+        LogActivity.addLog("Main", "Face verification started, info=$currentIdCardInfo")
         
+        // 检查是否有ID卡信息，如果没有，尝试从手动输入获取
         if (currentIdCardInfo == null) {
-            Toast.makeText(this, "Please upload ID card first", Toast.LENGTH_SHORT).show()
-            return
+            val name = etName.text.toString().trim()
+            val idNumber = etIdNumber.text.toString().trim()
+            
+            if (name.isEmpty() || idNumber.isEmpty()) {
+                Toast.makeText(this, "Please upload ID card first", Toast.LENGTH_SHORT).show()
+                return
+            }
+            
+            // 从手动输入创建ID卡信息
+            currentIdCardInfo = IDCardInfo(
+                name = name,
+                idNumber = idNumber,
+                gender = etGender.text.toString().trim(),
+                address = etAddress.text.toString().trim()
+            )
         }
         
         try {
             val intent = Intent(this, FaceCaptureActivity::class.java)
             startActivityForResult(intent, FACE_CAPTURE)
         } catch (e: Exception) {
-            LogActivity.addLog("Main", "Face capture error: ")
-            Toast.makeText(this, "Cannot start: ", Toast.LENGTH_LONG).show()
+            LogActivity.addLog("Main", "Face capture error: ${e.message}")
+            Toast.makeText(this, "Cannot start: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
     
@@ -212,7 +226,7 @@ class MainActivity : AppCompatActivity() {
     
     private fun performBaiduOCR(bitmap: Bitmap): IDCardInfo? {
         try {
-            val tokenUrl = "https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=&client_secret="
+            val tokenUrl = "https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=$API_KEY&client_secret=$SECRET_KEY"
             val tokenRequest = Request.Builder()
                 .url(tokenUrl)
                 .post(FormBody.Builder().build())
@@ -234,7 +248,7 @@ class MainActivity : AppCompatActivity() {
             bitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)
             val imageBase64 = android.util.Base64.encodeToString(outputStream.toByteArray(), android.util.Base64.NO_WRAP)
             
-            val ocrUrl = "https://aip.baidubce.com/rest/2.0/ocr/v1/idcard?access_token=&id_card_side=front"
+            val ocrUrl = "https://aip.baidubce.com/rest/2.0/ocr/v1/idcard?access_token=$token&id_card_side=front"
             val ocrBody = FormBody.Builder()
                 .add("image", imageBase64)
                 .add("detect_direction", "true")
@@ -249,43 +263,46 @@ class MainActivity : AppCompatActivity() {
             val ocrResponse = client.newCall(ocrRequest).execute()
             val ocrResult = ocrResponse.body?.string()
             
-            LogActivity.addLog("OCR", "Response: ...")
+            LogActivity.addLog("OCR", "Response: $ocrResult")
             
             return parseOCRResult(ocrResult ?: "")
             
         } catch (e: Exception) {
-            LogActivity.addLog("OCR", "Exception: ")
+            LogActivity.addLog("OCR", "Exception: ${e.message}")
             return null
         }
     }
     
     private fun parseOCRResult(jsonStr: String): IDCardInfo? {
         try {
-            val nameIdx = jsonStr.indexOf("\"姓名\":{\"words\":\"")
-            val idIdx = jsonStr.indexOf("\"公民身份号码\":{\"words\":\"")
-            val genderIdx = jsonStr.indexOf("\"性别\":{\"words\":\"")
-            val addrIdx = jsonStr.indexOf("\"住址\":{\"words\":\"")
+            val json = JSONObject(jsonStr)
             
-            fun extractValue(idx: Int): String {
-                if (idx == -1) return ""
-                val start = idx + 13
-                val end = jsonStr.indexOf("\"", start)
-                return if (end == -1) "" else jsonStr.substring(start, end)
+            if (json.has("error_code")) {
+                val errorCode = json.getInt("error_code")
+                val errorMsg = json.optString("error_msg")
+                LogActivity.addLog("OCR", "API Error $errorCode: $errorMsg")
+                return null
             }
             
-            val name = extractValue(nameIdx)
-            val idNumber = extractValue(idIdx)
-            val gender = extractValue(genderIdx)
-            val address = extractValue(addrIdx)
+            val wordsResult = json.optJSONObject("words_result")
+            if (wordsResult == null) {
+                LogActivity.addLog("OCR", "No words_result in response")
+                return null
+            }
             
-            LogActivity.addLog("OCR", "Got name='' id=''")
+            val name = wordsResult.optJSONObject("姓名")?.optString("words", "") ?: ""
+            val idNumber = wordsResult.optJSONObject("公民身份号码")?.optString("words", "") ?: ""
+            val gender = wordsResult.optJSONObject("性别")?.optString("words", "") ?: ""
+            val address = wordsResult.optJSONObject("住址")?.optString("words", "") ?: ""
+            
+            LogActivity.addLog("OCR", "Got name='$name' id='$idNumber'")
             
             if (name.isEmpty() && idNumber.isEmpty()) return null
             
             return IDCardInfo(name, idNumber, gender, address)
             
         } catch (e: Exception) {
-            LogActivity.addLog("OCR", "Parse error: ")
+            LogActivity.addLog("OCR", "Parse error: ${e.message}")
             return null
         }
     }

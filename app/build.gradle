@@ -22,8 +22,8 @@ android {
         versionCode 1
         versionName "1.0"
 
-        buildConfigField "String", "ALIYUN_ACCESS_KEY_ID", "\"${localProperties.getProperty('aliyun.accessKeyId', '')}\""
-        buildConfigField "String", "ALIYUN_ACCESS_KEY_SECRET", "\"${localProperties.getProperty('aliyun.accessKeySecret', '')}\""
+        buildConfigField "String", "ALIYUN_ACCESS_KEY_ID", "\"your_access_key_id\""
+        buildConfigField "String", "ALIYUN_ACCESS_KEY_SECRET", "\"your_access_key_secret\""
     }
 
     buildTypes {
@@ -58,7 +58,7 @@ dependencies {
     implementation 'com.google.mlkit:text-recognition:16.0.0'
     implementation 'com.google.mlkit:text-recognition-chinese:16.0.0'
 
-    // HTTP µ÷ÓÃ°¢ÀïÔÆ API£¨²»ÓÃ°¢ÀïÔÆ SDK£©
+    // HTTP ï¿½ï¿½ï¿½Ã°ï¿½ï¿½ï¿½ï¿½ï¿½ APIï¿½ï¿½ï¿½ï¿½ï¿½Ã°ï¿½ï¿½ï¿½ï¿½ï¿½ SDKï¿½ï¿½
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
