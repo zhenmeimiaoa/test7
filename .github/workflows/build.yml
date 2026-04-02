@@ -1,4 +1,4 @@
-name: Build APK
+﻿name: Build APK
 
 on:
   push:
@@ -22,17 +22,17 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
       
-    - name: Clear Gradle cache
-      run: rm -rf ~/.gradle/caches/
+    - name: Create local.properties with secrets
+      run: |
+        echo "aliyun.accessKeyId=${{ secrets.ALIYUN_ACCESS_KEY_ID }}" > local.properties
+        echo "aliyun.accessKeySecret=${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}" >> local.properties
+        cat local.properties
       
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
       
-    - name: Clean build
-      run: ./gradlew clean
-      
     - name: Build with Gradle
-      run: ./gradlew assembleDebug --no-build-cache
+      run: ./gradlew assembleDebug
       
     - name: Upload APK
       uses: actions/upload-artifact@v4
