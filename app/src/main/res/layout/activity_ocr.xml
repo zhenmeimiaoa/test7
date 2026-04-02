@@ -1,0 +1,107 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#F5F5F5">
+
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="拍照识别身份信息"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#1976D2"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btnSelectImage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="选择身份证照片"
+        android:textSize="16sp"
+        android:padding="12dp"
+        android:backgroundTint="#4CAF50"/>
+
+    <ImageView
+        android:id="@+id/ivIdCard"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_marginTop="16dp"
+        android:scaleType="fitCenter"
+        android:background="#FFFFFF"/>
+
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textSize="14sp"
+        android:layout_marginTop="8dp"
+        android:textColor="#666666"/>
+
+    <TextView
+        android:id="@+id/etName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="姓名"
+        android:textSize="16sp"
+        android:padding="8dp"
+        android:layout_marginTop="8dp"
+        android:background="#FFFFFF"/>
+
+    <TextView
+        android:id="@+id/etIdNumber"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="身份证号"
+        android:textSize="16sp"
+        android:padding="8dp"
+        android:layout_marginTop="8dp"
+        android:background="#FFFFFF"/>
+
+    <TextView
+        android:id="@+id/etGender"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="性别"
+        android:textSize="16sp"
+        android:padding="8dp"
+        android:layout_marginTop="8dp"
+        android:background="#FFFFFF"/>
+
+    <TextView
+        android:id="@+id/etAddress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="地址"
+        android:textSize="16sp"
+        android:padding="8dp"
+        android:layout_marginTop="8dp"
+        android:background="#FFFFFF"/>
+
+    <Button
+        android:id="@+id/btnNext"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="下一步：人脸验证"
+        android:textSize="16sp"
+        android:padding="12dp"
+        android:layout_marginTop="16dp"
+        android:visibility="gone"
+        android:backgroundTint="#2196F3"/>
+
+    <Button
+        android:id="@+id/btnBack"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="返回"
+        android:textSize="14sp"
+        android:padding="10dp"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="#757575"/>
+
+</LinearLayout>

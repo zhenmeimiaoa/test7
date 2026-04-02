@@ -1,156 +1,49 @@
-<?xml version="1.0" encoding="utf-8"?>
-<FrameLayout 
-    xmlns:android="http://schemas.android.com/apk/res/android"
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="32dp"
+    android:background="#F5F5F5">
 
-    <LinearLayout 
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:background="@color/white">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:background="@color/purple_500"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="16dp">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="ID Card Verification"
-                android:textColor="@color/white"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <ImageButton
-                android:id="@+id/btnEdit"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_edit"
-                android:visibility="gone" />
-        </LinearLayout>
-
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="16dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <FrameLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="200dp"
-                    android:background="#F5F5F5"
-                    android:layout_marginBottom="16dp">
-
-                    <ImageView
-                        android:id="@+id/ivIdCard"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:scaleType="fitCenter" />
-
-                    <LinearLayout
-                        android:id="@+id/layoutUpload"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:orientation="vertical">
-
-                        <ImageView
-                            android:layout_width="64dp"
-                            android:layout_height="64dp"
-                            android:src="@android:drawable/ic_menu_upload"
-                            android:alpha="0.5" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Click to upload ID card"
-                            android:textSize="16sp"
-                            android:layout_marginTop="8dp" />
-                    </LinearLayout>
-                </FrameLayout>
-
-                <EditText
-                    android:id="@+id/etName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Name"
-                    android:enabled="false"
-                    android:layout_marginBottom="8dp" />
-
-                <EditText
-                    android:id="@+id/etIdNumber"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="ID Number"
-                    android:enabled="false"
-                    android:layout_marginBottom="8dp" />
-
-                <EditText
-                    android:id="@+id/etGender"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Gender"
-                    android:enabled="false"
-                    android:layout_marginBottom="8dp" />
-
-                <EditText
-                    android:id="@+id/etAddress"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Address"
-                    android:enabled="false"
-                    android:layout_marginBottom="16dp" />
-
-                <TextView
-                    android:id="@+id/tvStatus"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Please upload ID card photo"
-                    android:textSize="16sp"
-                    android:gravity="center"
-                    android:padding="12dp"
-                    android:background="#E0E0E0"
-                    android:layout_marginBottom="16dp" />
-
-                <Button
-                    android:id="@+id/btnFaceCompare"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Start Face Verification"
-                    android:enabled="false"
-                    android:layout_marginBottom="16dp" />
-
-                <TextView
-                    android:id="@+id/tvResult"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text=""
-                    android:textSize="18sp"
-                    android:gravity="center"
-                    android:padding="16dp"
-                    android:visibility="gone" />
-
-            </LinearLayout>
-        </ScrollView>
-    </LinearLayout>
-
-    <Button
-        android:id="@+id/btnLogs"
+    <TextView
+        android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:text="Logs"
-        android:textSize="12sp" />
+        android:text="就医数据采集系统"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="#1976D2"
+        android:layout_marginBottom="48dp"/>
 
-</FrameLayout>
+    <Button
+        android:id="@+id/btnManualInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="手动输入身份信息"
+        android:textSize="18sp"
+        android:padding="16dp"
+        android:layout_marginBottom="16dp"
+        android:backgroundTint="#2196F3"/>
+
+    <Button
+        android:id="@+id/btnOCR"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="拍照识别身份信息"
+        android:textSize="18sp"
+        android:padding="16dp"
+        android:layout_marginBottom="16dp"
+        android:backgroundTint="#4CAF50"/>
+
+    <Button
+        android:id="@+id/btnNFC"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="NFC识别身份信息"
+        android:textSize="18sp"
+        android:padding="16dp"
+        android:backgroundTint="#FF9800"/>
+
+</LinearLayout>

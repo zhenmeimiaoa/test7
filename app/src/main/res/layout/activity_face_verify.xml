@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="#F5F5F5">
+
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="人脸拍照识别验证"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#1976D2"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:id="@+id/tvInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="请先输入身份信息"
+        android:textSize="16sp"
+        android:padding="12dp"
+        android:background="#FFFFFF"
+        android:layout_marginBottom="24dp"/>
+
+    <Button
+        android:id="@+id/btnStartCamera"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="开始人脸拍照"
+        android:textSize="18sp"
+        android:padding="16dp"
+        android:backgroundTint="#4CAF50"/>
+
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textSize="14sp"
+        android:layout_marginTop="16dp"
+        android:textColor="#666666"/>
+
+    <Button
+        android:id="@+id/btnBack"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="返回"
+        android:textSize="14sp"
+        android:padding="10dp"
+        android:layout_marginTop="24dp"
+        android:backgroundTint="#757575"/>
+
+</LinearLayout>
