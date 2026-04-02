@@ -32,6 +32,16 @@
         android:text="返回首页"
         android:textSize="18sp"
         android:padding="16dp"
+        android:layout_marginBottom="16dp"
         android:backgroundTint="#2196F3"/>
+
+    <Button
+        android:id="@+id/btnLogs"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="查看日志"
+        android:textSize="14sp"
+        android:padding="10dp"
+        android:backgroundTint="#9E9E9E"/>
 
 </LinearLayout>

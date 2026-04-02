@@ -44,6 +44,16 @@
         android:text="NFC识别身份信息"
         android:textSize="18sp"
         android:padding="16dp"
+        android:layout_marginBottom="32dp"
         android:backgroundTint="#FF9800"/>
+
+    <Button
+        android:id="@+id/btnLogs"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="查看日志"
+        android:textSize="14sp"
+        android:padding="10dp"
+        android:backgroundTint="#757575"/>
 
 </LinearLayout>

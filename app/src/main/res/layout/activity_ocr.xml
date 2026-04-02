@@ -94,14 +94,32 @@
         android:visibility="gone"
         android:backgroundTint="#2196F3"/>
 
-    <Button
-        android:id="@+id/btnBack"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="返回"
-        android:textSize="14sp"
-        android:padding="10dp"
-        android:layout_marginTop="8dp"
-        android:backgroundTint="#757575"/>
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp">
+
+        <Button
+            android:id="@+id/btnBack"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="返回"
+            android:textSize="14sp"
+            android:padding="10dp"
+            android:backgroundTint="#757575"/>
+
+        <Button
+            android:id="@+id/btnLogs"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="查看日志"
+            android:textSize="14sp"
+            android:padding="10dp"
+            android:backgroundTint="#9E9E9E"/>
+    </LinearLayout>
 
 </LinearLayout>

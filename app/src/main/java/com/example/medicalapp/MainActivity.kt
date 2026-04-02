@@ -29,6 +29,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnManualInput).text = "手动输入身份信息"
         findViewById<Button>(R.id.btnOCR).text = "拍照识别身份信息"
         findViewById<Button>(R.id.btnNFC).text = "NFC识别身份信息"
+        findViewById<Button>(R.id.btnLogs).text = "查看日志"
         
         findViewById<Button>(R.id.btnManualInput).setOnClickListener {
             startActivity(Intent(this, ManualInputActivity::class.java))
@@ -40,6 +41,10 @@ class MainActivity : AppCompatActivity() {
         
         findViewById<Button>(R.id.btnNFC).setOnClickListener {
             android.widget.Toast.makeText(this, "NFC功能开发中", android.widget.Toast.LENGTH_SHORT).show()
+        }
+        
+        findViewById<Button>(R.id.btnLogs).setOnClickListener {
+            startActivity(Intent(this, LogActivity::class.java))
         }
     }
 }
