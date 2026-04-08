@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -8,44 +8,31 @@
     android:background="#F5F5F5">
 
     <TextView
-        android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="就医数据采集系统"
+        android:text="AI智能就医助手"
         android:textSize="28sp"
         android:textStyle="bold"
         android:textColor="#1976D2"
         android:layout_marginBottom="48dp"/>
 
     <Button
-        android:id="@+id/btnManualInput"
+        android:id="@+id/btnIdentityVerify"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="手动输入身份信息"
-        android:textSize="18sp"
-        android:padding="16dp"
-        android:layout_marginBottom="16dp"
+        android:layout_height="120dp"
+        android:text="🆔 身份验证"
+        android:textSize="24sp"
+        android:layout_marginBottom="24dp"
         android:backgroundTint="#2196F3"/>
 
     <Button
-        android:id="@+id/btnOCR"
+        android:id="@+id/btnSymptomAnalysis"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="拍照识别身份信息"
-        android:textSize="18sp"
-        android:padding="16dp"
-        android:layout_marginBottom="16dp"
-        android:backgroundTint="#4CAF50"/>
-
-    <Button
-        android:id="@+id/btnNFC"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="NFC识别身份信息"
-        android:textSize="18sp"
-        android:padding="16dp"
-        android:layout_marginBottom="32dp"
-        android:backgroundTint="#FF9800"/>
+        android:layout_height="120dp"
+        android:text="🏥 病症分析"
+        android:textSize="24sp"
+        android:layout_marginBottom="48dp"
+        android:backgroundTint="#757575"/>
 
     <Button
         android:id="@+id/btnLogs"
@@ -53,7 +40,7 @@
         android:layout_height="wrap_content"
         android:text="查看日志"
         android:textSize="14sp"
-        android:padding="10dp"
-        android:backgroundTint="#757575"/>
+        android:padding="12dp"
+        android:backgroundTint="#9E9E9E"/>
 
 </LinearLayout>

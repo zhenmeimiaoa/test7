@@ -7,11 +7,12 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.example.medicalapp.model.IDCardInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -27,60 +28,42 @@ class OcrActivity : AppCompatActivity() {
     private val API_KEY = "Su4BMNAumYZWBzJbuiL1wASF"
     private val SECRET_KEY = "2yw7FNQ3EvobHqy41ZxIoTnLQYcVW83K"
     
+    private var capturedBitmap: Bitmap? = null
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_ocr)
         
-        try {
-            setContentView(R.layout.activity_ocr)
-            LogActivity.addLog("OcrActivity", "onCreate started")
-        } catch (e: Exception) {
-            android.widget.Toast.makeText(this, "布局加载失败: " + e.message, android.widget.Toast.LENGTH_LONG).show()
-            LogActivity.addLog("OcrActivity", "setContentView error: " + e.message)
-            finish()
-            return
+        LogActivity.addLog("OcrActivity", "onCreate")
+        
+        findViewById<Button>(R.id.btnSelectImage).setOnClickListener {
+            startActivityForResult(
+                Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI),
+                PICK_IMAGE
+            )
         }
         
-        try {
-            findViewById<TextView>(R.id.tvTitle).text = "拍照识别身份信息"
-            findViewById<Button>(R.id.btnSelectImage).text = "选择身份证照片"
-            findViewById<Button>(R.id.btnBack).text = "返回"
-            findViewById<Button>(R.id.btnLogs).text = "查看日志"
-            
-            findViewById<Button>(R.id.btnSelectImage).setOnClickListener {
-                LogActivity.addLog("OcrActivity", "Select image clicked")
-                startActivityForResult(
-                    Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI),
-                    PICK_IMAGE
-                )
-            }
-            
-            findViewById<Button>(R.id.btnBack).setOnClickListener { 
-                LogActivity.addLog("OcrActivity", "Back clicked")
-                finish() 
-            }
-            
-            findViewById<Button>(R.id.btnLogs).setOnClickListener {
-                startActivity(Intent(this, LogActivity::class.java))
-            }
-            
-            LogActivity.addLog("OcrActivity", "onCreate completed successfully")
-        } catch (e: Exception) {
-            LogActivity.addLog("OcrActivity", "init error: " + e.message)
-            android.widget.Toast.makeText(this, "初始化失败: " + e.message, android.widget.Toast.LENGTH_LONG).show()
+        // 右上角手动修改按钮
+        findViewById<Button>(R.id.btnManualEdit).setOnClickListener {
+            enableManualEdit()
+        }
+        
+        // 确认并进入人脸验证
+        findViewById<Button>(R.id.btnConfirm).setOnClickListener {
+            saveIdentityAndProceed()
+        }
+        
+        findViewById<Button>(R.id.btnBack).setOnClickListener { finish() }
+        
+        findViewById<Button>(R.id.btnLogs).setOnClickListener {
+            startActivity(Intent(this, LogActivity::class.java))
         }
     }
     
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        LogActivity.addLog("OcrActivity", "onActivityResult: requestCode=" + requestCode + ", resultCode=" + resultCode)
-        
         if (requestCode == PICK_IMAGE && resultCode == RESULT_OK && data != null) {
-            data.data?.let { 
-                LogActivity.addLog("OcrActivity", "Image selected: " + it.toString())
-                processImage(it) 
-            }
-        } else {
-            LogActivity.addLog("OcrActivity", "Image selection cancelled or failed")
+            data.data?.let { processImage(it) }
         }
     }
     
@@ -88,59 +71,46 @@ class OcrActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 findViewById<TextView>(R.id.tvStatus).text = "识别中..."
-                LogActivity.addLog("OcrActivity", "Processing image...")
                 
                 val bitmap = withContext(Dispatchers.IO) {
                     contentResolver.openInputStream(imageUri)?.use { BitmapFactory.decodeStream(it) }
-                } 
-                
-                if (bitmap == null) {
+                } ?: run {
                     findViewById<TextView>(R.id.tvStatus).text = "加载图片失败"
-                    LogActivity.addLog("OcrActivity", "Bitmap is null")
                     return@launch
                 }
                 
+                capturedBitmap = bitmap
                 findViewById<ImageView>(R.id.ivIdCard).setImageBitmap(bitmap)
-                LogActivity.addLog("OcrActivity", "Bitmap loaded, size: " + bitmap.width + "x" + bitmap.height)
                 
                 val info = withContext(Dispatchers.IO) { performOCR(bitmap) }
                 
                 if (info != null) {
-                    MainActivity.currentIdCardInfo = info
-                    MainActivity.currentIdCardBitmap = bitmap
+                    // 显示识别结果到可编辑字段
+                    findViewById<EditText>(R.id.etName).setText(info.name)
+                    findViewById<EditText>(R.id.etIdNumber).setText(info.idNumber)
+                    findViewById<EditText>(R.id.etGender).setText(info.gender)
+                    findViewById<EditText>(R.id.etAddress).setText(info.address)
                     
-                    findViewById<TextView>(R.id.etName).text = info.name
-                    findViewById<TextView>(R.id.etIdNumber).text = info.idNumber
-                    findViewById<TextView>(R.id.etGender).text = info.gender
-                    findViewById<TextView>(R.id.etAddress).text = info.address
-                    findViewById<TextView>(R.id.tvStatus).text = "识别成功：" + info.name
+                    findViewById<TextView>(R.id.tvStatus).text = "识别成功，请核对或修改"
+                    findViewById<Button>(R.id.btnConfirm).visibility = android.view.View.VISIBLE
+                    
                     LogActivity.addLog("OcrActivity", "OCR success: " + info.name)
-                    
-                    findViewById<Button>(R.id.btnNext).apply {
-                        text = "下一步：人脸验证"
-                        visibility = android.view.View.VISIBLE
-                        setOnClickListener {
-                            LogActivity.addLog("OcrActivity", "Next clicked, starting FaceVerifyActivity")
-                            startActivity(Intent(this@OcrActivity, FaceVerifyActivity::class.java))
-                        }
-                    }
                 } else {
                     findViewById<TextView>(R.id.tvStatus).text = "识别失败，请手动输入"
-                    LogActivity.addLog("OcrActivity", "OCR failed")
+                    enableManualEdit()
                 }
             } catch (e: Exception) {
                 findViewById<TextView>(R.id.tvStatus).text = "错误：" + e.message
-                LogActivity.addLog("OcrActivity", "Process error: " + e.message)
-                e.printStackTrace()
+                LogActivity.addLog("OcrActivity", "Error: " + e.message)
             }
         }
     }
     
     private fun performOCR(bitmap: Bitmap): IDCardInfo? {
         try {
-            LogActivity.addLog("OcrActivity", "Starting OCR...")
             val client = OkHttpClient()
             
+            // 获取token
             val tokenBody = FormBody.Builder()
                 .add("grant_type", "client_credentials")
                 .add("client_id", API_KEY)
@@ -151,17 +121,13 @@ class OcrActivity : AppCompatActivity() {
                 .post(tokenBody)
                 .build()
             
-            LogActivity.addLog("OcrActivity", "Getting token...")
             val tokenResponse = client.newCall(tokenRequest).execute()
             val tokenJson = JSONObject(tokenResponse.body?.string() ?: "{}")
             val token = tokenJson.optString("access_token")
             
-            if (token.isEmpty()) {
-                LogActivity.addLog("OcrActivity", "Token is empty")
-                return null
-            }
-            LogActivity.addLog("OcrActivity", "Token obtained")
+            if (token.isEmpty()) return null
             
+            // OCR识别
             val outputStream = ByteArrayOutputStream()
             bitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)
             val imageBase64 = android.util.Base64.encodeToString(outputStream.toByteArray(), android.util.Base64.NO_WRAP)
@@ -175,36 +141,53 @@ class OcrActivity : AppCompatActivity() {
                 .post(ocrBody)
                 .build()
             
-            LogActivity.addLog("OcrActivity", "Calling OCR API...")
             val ocrResponse = client.newCall(ocrRequest).execute()
             val json = JSONObject(ocrResponse.body?.string() ?: "{}")
             
-            if (json.has("error_code")) {
-                LogActivity.addLog("OcrActivity", "OCR API error: " + json.toString())
-                return null
-            }
+            if (json.has("error_code")) return null
             
-            val wordsResult = json.optJSONObject("words_result") 
-            if (wordsResult == null) {
-                LogActivity.addLog("OcrActivity", "No words_result")
-                return null
-            }
+            val wordsResult = json.optJSONObject("words_result") ?: return null
             
-            val name = wordsResult.optJSONObject("姓名")?.optString("words", "") ?: ""
-            val idNumber = wordsResult.optJSONObject("公民身份号码")?.optString("words", "") ?: ""
-            val gender = wordsResult.optJSONObject("性别")?.optString("words", "") ?: ""
-            val nation = wordsResult.optJSONObject("民族")?.optString("words", "") ?: ""
-            val address = wordsResult.optJSONObject("住址")?.optString("words", "") ?: ""
-            
-            LogActivity.addLog("OcrActivity", "Parsed: name=" + name + ", id=" + idNumber)
-            
-            if (name.isEmpty() && idNumber.isEmpty()) return null
-            
-            return IDCardInfo(name=name, idNumber=idNumber, gender=gender, nation=nation, address=address)
+            return IDCardInfo(
+                name = wordsResult.optJSONObject("姓名")?.optString("words", "") ?: "",
+                idNumber = wordsResult.optJSONObject("公民身份号码")?.optString("words", "") ?: "",
+                gender = wordsResult.optJSONObject("性别")?.optString("words", "") ?: "",
+                nation = wordsResult.optJSONObject("民族")?.optString("words", "") ?: "",
+                address = wordsResult.optJSONObject("住址")?.optString("words", "") ?: ""
+            )
         } catch (e: Exception) {
             LogActivity.addLog("OcrActivity", "OCR Exception: " + e.message)
-            e.printStackTrace()
             return null
         }
+    }
+    
+    private fun enableManualEdit() {
+        findViewById<EditText>(R.id.etName).isEnabled = true
+        findViewById<EditText>(R.id.etIdNumber).isEnabled = true
+        findViewById<EditText>(R.id.etGender).isEnabled = true
+        findViewById<EditText>(R.id.etAddress).isEnabled = true
+        findViewById<Button>(R.id.btnConfirm).visibility = android.view.View.VISIBLE
+        Toast.makeText(this, "已启用手动编辑", Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun saveIdentityAndProceed() {
+        val name = findViewById<EditText>(R.id.etName).text.toString().trim()
+        val idNumber = findViewById<EditText>(R.id.etIdNumber).text.toString().trim()
+        val gender = findViewById<EditText>(R.id.etGender).text.toString().trim()
+        val address = findViewById<EditText>(R.id.etAddress).text.toString().trim()
+        
+        if (name.isEmpty() || idNumber.isEmpty()) {
+            Toast.makeText(this, "姓名和身份证号不能为空", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        // 保存到全局状态
+        MainActivity.idCardInfo = IDCardInfo(name, idNumber, gender, "", address)
+        MainActivity.idCardBitmap = capturedBitmap
+        
+        LogActivity.addLog("OcrActivity", "Identity saved: $name, $idNumber")
+        
+        // 进入人脸验证
+        startActivity(Intent(this, FaceVerifyActivity::class.java))
     }
 }
