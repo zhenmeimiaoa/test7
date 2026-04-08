@@ -98,12 +98,12 @@ class SymptomInputActivity : AppCompatActivity() {
     
     private fun startRecording() {
         try {
-            audioFile = File(externalCacheDir, "voice_${System.currentTimeMillis()}.pcm")
+            audioFile = File(externalCacheDir, "voice_${System.currentTimeMillis()}.wav")
             
             mediaRecorder = MediaRecorder().apply {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
-                setOutputFormat(MediaRecorder.OutputFormat.RAW_AMR)
-                setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+                setOutputFormat(MediaRecorder.OutputFormat.DEFAULT)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
                 setOutputFile(audioFile?.absolutePath)
                 prepare()
                 start()
@@ -193,8 +193,8 @@ class SymptomInputActivity : AppCompatActivity() {
         val audioBase64 = android.util.Base64.encodeToString(audioFile.readBytes(), android.util.Base64.NO_WRAP)
         
         val jsonBody = JSONObject().apply {
-            put("format", "amr")
-            put("rate", 8000)
+            put("format", "pcm")
+            put("rate", 16000)
             put("channel", 1)
             put("cuid", BaiduSpeechConfig.APP_ID)
             put("token", accessToken)
@@ -264,3 +264,4 @@ class SymptomInputActivity : AppCompatActivity() {
         mediaRecorder = null
     }
 }
+
