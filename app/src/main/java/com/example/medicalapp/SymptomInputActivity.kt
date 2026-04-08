@@ -3,6 +3,8 @@
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioFormat
+import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.os.Bundle
 import android.widget.Button
@@ -21,17 +23,21 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
 import java.io.File
 
 class SymptomInputActivity : AppCompatActivity() {
     
     private val RECORD_AUDIO_REQUEST_CODE = 101
-    private var mediaRecorder: MediaRecorder? = null
-    private var audioFile: File? = null
+    private var audioRecord: AudioRecord? = null
     private var isRecording = false
-    
-    // 延迟初始化视图组件
     private lateinit var btnVoiceInput: Button
+    private var pcmData: ByteArray? = null
+    
+    // 录音参数 - 百度API要求：PCM 16kHz 16bit 单声道
+    private val SAMPLE_RATE = 16000
+    private val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
+    private val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,15 +45,12 @@ class SymptomInputActivity : AppCompatActivity() {
         
         LogActivity.addLog("SymptomInputActivity", "onCreate started")
         
-        // 检查身份验证
         if (!MainActivity.isIdentityVerified) {
             Toast.makeText(this, "请先完成身份验证", Toast.LENGTH_LONG).show()
-            LogActivity.addLog("SymptomInputActivity", "Blocked: identity not verified")
             finish()
             return
         }
         
-        // 初始化视图
         val tvIdentityInfo = findViewById<TextView>(R.id.tvIdentityInfo)
         val etSymptom = findViewById<EditText>(R.id.etSymptom)
         btnVoiceInput = findViewById<Button>(R.id.btnVoiceInput)
@@ -55,7 +58,6 @@ class SymptomInputActivity : AppCompatActivity() {
         val btnBack = findViewById<Button>(R.id.btnBack)
         val btnLogs = findViewById<Button>(R.id.btnLogs)
         
-        // 显示已验证的身份信息
         val info = MainActivity.idCardInfo
         tvIdentityInfo.text = "当前患者：${info?.name ?: "未知"}（已验证）"
         
@@ -77,20 +79,14 @@ class SymptomInputActivity : AppCompatActivity() {
         }
         
         btnBack.setOnClickListener { finish() }
+        btnLogs.setOnClickListener { startActivity(Intent(this, LogActivity::class.java)) }
         
-        btnLogs.setOnClickListener {
-            startActivity(Intent(this, LogActivity::class.java))
-        }
-        
-        LogActivity.addLog("SymptomInputActivity", "onCreate completed for: " + (info?.name ?: "unknown"))
+        LogActivity.addLog("SymptomInputActivity", "onCreate completed")
     }
     
     private fun checkPermissionAndStartRecording() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) 
-            != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, 
-                arrayOf(Manifest.permission.RECORD_AUDIO), 
-                RECORD_AUDIO_REQUEST_CODE)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), RECORD_AUDIO_REQUEST_CODE)
         } else {
             startRecording()
         }
@@ -98,60 +94,85 @@ class SymptomInputActivity : AppCompatActivity() {
     
     private fun startRecording() {
         try {
-            audioFile = File(externalCacheDir, "voice_${System.currentTimeMillis()}.wav")
+            val minBufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)
             
-            mediaRecorder = MediaRecorder().apply {
-                setAudioSource(MediaRecorder.AudioSource.MIC)
-                setOutputFormat(MediaRecorder.OutputFormat.DEFAULT)
-                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                setOutputFile(audioFile?.absolutePath)
-                prepare()
-                start()
+            audioRecord = AudioRecord(
+                MediaRecorder.AudioSource.MIC,
+                SAMPLE_RATE,
+                CHANNEL_CONFIG,
+                AUDIO_FORMAT,
+                minBufferSize * 2
+            )
+            
+            if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
+                Toast.makeText(this, "录音初始化失败", Toast.LENGTH_SHORT).show()
+                return
             }
             
+            pcmData = null
             isRecording = true
+            audioRecord?.startRecording()
+            
             btnVoiceInput.text = "🎙️ 停止录音"
             btnVoiceInput.backgroundTintList = getColorStateList(android.R.color.holo_red_dark)
-            
             Toast.makeText(this, "请说话...", Toast.LENGTH_SHORT).show()
-            LogActivity.addLog("SymptomInputActivity", "Recording started")
+            LogActivity.addLog("SymptomInputActivity", "Recording started (PCM 16kHz)")
+            
+            // 在后台线程读取音频数据
+            Thread {
+                val outputStream = ByteArrayOutputStream()
+                val buffer = ByteArray(minBufferSize)
+                
+                while (isRecording) {
+                    val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
+                    if (read > 0) {
+                        outputStream.write(buffer, 0, read)
+                    }
+                }
+                
+                pcmData = outputStream.toByteArray()
+                outputStream.close()
+            }.start()
             
         } catch (e: Exception) {
-            Toast.makeText(this, "录音启动失败: " + e.message, Toast.LENGTH_SHORT).show()
-            LogActivity.addLog("SymptomInputActivity", "Recording error: " + e.message)
+            Toast.makeText(this, "录音启动失败: ${e.message}", Toast.LENGTH_SHORT).show()
+            LogActivity.addLog("SymptomInputActivity", "Recording error: ${e.message}")
         }
     }
     
     private fun stopRecordingAndRecognize() {
         try {
-            mediaRecorder?.apply {
+            isRecording = false
+            audioRecord?.apply {
                 stop()
                 release()
             }
-            mediaRecorder = null
-            isRecording = false
+            audioRecord = null
             
             btnVoiceInput.text = "🎤 语音输入"
             btnVoiceInput.backgroundTintList = getColorStateList(android.R.color.holo_orange_dark)
             
-            LogActivity.addLog("SymptomInputActivity", "Recording stopped, file: " + audioFile?.length() + " bytes")
+            val dataSize = pcmData?.size ?: 0
+            LogActivity.addLog("SymptomInputActivity", "Recording stopped, PCM data: $dataSize bytes")
             
-            // 调用百度语音API识别
-            audioFile?.let { recognizeSpeech(it) }
+            if (dataSize > 0) {
+                recognizeSpeech()
+            } else {
+                Toast.makeText(this, "录音数据为空", Toast.LENGTH_SHORT).show()
+            }
             
         } catch (e: Exception) {
-            Toast.makeText(this, "停止录音失败: " + e.message, Toast.LENGTH_SHORT).show()
-            LogActivity.addLog("SymptomInputActivity", "Stop recording error: " + e.message)
+            Toast.makeText(this, "停止录音失败: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
     
-    private fun recognizeSpeech(audioFile: File) {
+    private fun recognizeSpeech() {
         lifecycleScope.launch {
             try {
                 Toast.makeText(this@SymptomInputActivity, "识别中...", Toast.LENGTH_SHORT).show()
                 
                 val result = withContext(Dispatchers.IO) {
-                    callBaiduSpeechAPI(audioFile)
+                    callBaiduSpeechAPI()
                 }
                 
                 if (result.isNotEmpty()) {
@@ -161,18 +182,17 @@ class SymptomInputActivity : AppCompatActivity() {
                 } else {
                     Toast.makeText(this@SymptomInputActivity, "未能识别，请重试", Toast.LENGTH_SHORT).show()
                 }
-                
             } catch (e: Exception) {
-                Toast.makeText(this@SymptomInputActivity, "识别失败: " + e.message, Toast.LENGTH_SHORT).show()
-                LogActivity.addLog("SymptomInputActivity", "Recognition error: " + e.message)
+                Toast.makeText(this@SymptomInputActivity, "识别失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                LogActivity.addLog("SymptomInputActivity", "Recognition error: ${e.message}")
             }
         }
     }
     
-    private fun callBaiduSpeechAPI(audioFile: File): String {
+    private fun callBaiduSpeechAPI(): String {
         val client = OkHttpClient()
         
-        // 1. 获取access_token
+        // 获取token
         val tokenUrl = "https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials" +
                 "&client_id=${BaiduSpeechConfig.API_KEY}&client_secret=${BaiduSpeechConfig.SECRET_KEY}"
         
@@ -186,11 +206,10 @@ class SymptomInputActivity : AppCompatActivity() {
             return ""
         }
         
-        // 2. 调用语音识别API
+        // 调用语音识别API
         val speechUrl = "https://vop.baidu.com/server_api?dev_pid=1537&cuid=${BaiduSpeechConfig.APP_ID}&token=$accessToken"
         
-        // 读取音频文件并转为Base64
-        val audioBase64 = android.util.Base64.encodeToString(audioFile.readBytes(), android.util.Base64.NO_WRAP)
+        val audioBase64 = android.util.Base64.encodeToString(pcmData, android.util.Base64.NO_WRAP)
         
         val jsonBody = JSONObject().apply {
             put("format", "pcm")
@@ -199,32 +218,32 @@ class SymptomInputActivity : AppCompatActivity() {
             put("cuid", BaiduSpeechConfig.APP_ID)
             put("token", accessToken)
             put("speech", audioBase64)
-            put("len", audioFile.length())
+            put("len", pcmData?.size ?: 0)
         }
         
         val requestBody = jsonBody.toString().toRequestBody("application/json".toMediaType())
-        val request = Request.Builder()
-            .url(speechUrl)
-            .post(requestBody)
-            .build()
+        val request = Request.Builder().url(speechUrl).post(requestBody).build()
         
         val response = client.newCall(request).execute()
         val responseBody = response.body?.string() ?: "{}"
         LogActivity.addLog("SymptomInputActivity", "API response: $responseBody")
         
         val resultJson = JSONObject(responseBody)
-        val resultArray = resultJson.optJSONArray("result")
-        
-        return if (resultArray != null && resultArray.length() > 0) {
-            resultArray.getString(0)
-        } else {
-            ""
+        if (resultJson.has("result")) {
+            val resultArray = resultJson.getJSONArray("result")
+            if (resultArray.length() > 0) {
+                return resultArray.getString(0)
+            }
         }
+        
+        if (resultJson.has("err_msg")) {
+            LogActivity.addLog("SymptomInputActivity", "API error: ${resultJson.getString('err_msg')}")
+        }
+        return ""
     }
     
     private fun saveSymptom(symptom: String) {
         MainActivity.symptomText = symptom
-        
         val info = MainActivity.idCardInfo
         val logEntry = """
             【病症信息保存】
@@ -236,7 +255,6 @@ class SymptomInputActivity : AppCompatActivity() {
         """.trimIndent()
         
         LogActivity.addLog("SymptomSave", logEntry)
-        
         Toast.makeText(this, "病症信息已保存", Toast.LENGTH_SHORT).show()
         
         val intent = Intent(this, MainActivity::class.java)
@@ -247,21 +265,17 @@ class SymptomInputActivity : AppCompatActivity() {
     
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == RECORD_AUDIO_REQUEST_CODE && grantResults.isNotEmpty() 
-            && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if (requestCode == RECORD_AUDIO_REQUEST_CODE && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             startRecording()
         }
     }
     
     override fun onDestroy() {
         super.onDestroy()
-        if (isRecording) {
-            mediaRecorder?.apply {
-                stop()
-                release()
-            }
+        isRecording = false
+        audioRecord?.apply {
+            stop()
+            release()
         }
-        mediaRecorder = null
     }
 }
-
