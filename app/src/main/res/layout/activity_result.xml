@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/layoutResult"
     android:layout_width="match_parent"
@@ -24,6 +24,17 @@
         android:text="相似度：73.1%"
         android:textSize="20sp"
         android:layout_marginBottom="48dp"/>
+
+    <Button
+        android:id="@+id/btnNext"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="下一步：录入症状"
+        android:textSize="18sp"
+        android:padding="16dp"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone"
+        android:backgroundTint="#4CAF50"/>
 
     <Button
         android:id="@+id/btnBackHome"
