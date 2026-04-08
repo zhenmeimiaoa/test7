@@ -14,7 +14,7 @@ class MainActivity : AppCompatActivity() {
         var currentIdCardBitmap: android.graphics.Bitmap? = null
         var faceCompareScore: Double = 0.0
         var faceCompareMessage: String = ""
-    }
+            var currentSymptom: String = ""\n    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
