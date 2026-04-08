@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.MediaRecorder
 import android.os.Bundle
-import android.os.Environment
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -17,12 +16,12 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.File
-import java.io.IOException
 
 class SymptomInputActivity : AppCompatActivity() {
     
@@ -30,6 +29,9 @@ class SymptomInputActivity : AppCompatActivity() {
     private var mediaRecorder: MediaRecorder? = null
     private var audioFile: File? = null
     private var isRecording = false
+    
+    // 延迟初始化视图组件
+    private lateinit var btnVoiceInput: Button
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,9 +47,10 @@ class SymptomInputActivity : AppCompatActivity() {
             return
         }
         
+        // 初始化视图
         val tvIdentityInfo = findViewById<TextView>(R.id.tvIdentityInfo)
         val etSymptom = findViewById<EditText>(R.id.etSymptom)
-        val btnVoiceInput = findViewById<Button>(R.id.btnVoiceInput)
+        btnVoiceInput = findViewById<Button>(R.id.btnVoiceInput)
         val btnSave = findViewById<Button>(R.id.btnSave)
         val btnBack = findViewById<Button>(R.id.btnBack)
         val btnLogs = findViewById<Button>(R.id.btnLogs)

@@ -1,4 +1,4 @@
-plugins {
+﻿plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
 }
@@ -13,6 +13,10 @@ android {
         targetSdk 34
         versionCode 1
         versionName "1.0"
+        
+        // 阿里云密钥（从 GitHub Secrets 读取）
+        buildConfigField "String", "ALIYUN_ACCESS_KEY_ID", "\"${System.getenv('ALIYUN_ACCESS_KEY_ID')}\""
+        buildConfigField "String", "ALIYUN_ACCESS_KEY_SECRET", "\"${System.getenv('ALIYUN_ACCESS_KEY_SECRET')}\""
     }
 
     buildTypes {
