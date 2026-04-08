@@ -81,6 +81,9 @@ class FaceVerifyActivity : AppCompatActivity() {
     }
     
     private fun performFaceCompare(faceBitmap: Bitmap) {
+        LogActivity.addLog("FaceVerifyActivity", "Starting comparison...")
+        LogActivity.addLog("FaceVerifyActivity", "ID card bitmap: " + (MainActivity.idCardBitmap?.let { "${it.width}x${it.height}" } ?: "null"))
+        LogActivity.addLog("FaceVerifyActivity", "Face bitmap: ${faceBitmap.width}x${faceBitmap.height}")
         lifecycleScope.launch {
             try {
                 findViewById<TextView>(R.id.tvStatus).text = "比对中..."
@@ -91,9 +94,15 @@ class FaceVerifyActivity : AppCompatActivity() {
                     return@launch
                 }
                 
-                val result = withContext(Dispatchers.IO) {
+                val result = try {
+            withContext(Dispatchers.IO) {
                     aliyunFaceHelper.compareFaces(idCardBitmap, faceBitmap)
-                }
+            }
+        } catch (e: Exception) {
+            LogActivity.addLog("FaceVerifyActivity", "Comparison exception: " + e.message)
+            LogActivity.addLog("FaceVerifyActivity", "Stack: " + e.stackTraceToString())
+            Pair(0.0, "Error: ${e.message}")
+        }
                 
                 val score = result.first
                 MainActivity.faceCompareScore = score
@@ -149,3 +158,4 @@ class FaceVerifyActivity : AppCompatActivity() {
         }
     }
 }
+
