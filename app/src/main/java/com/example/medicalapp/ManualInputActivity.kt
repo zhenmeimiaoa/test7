@@ -21,13 +21,13 @@ class ManualInputActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             
-            MainActivity.currentIdCardInfo = IDCardInfo(
+            MainActivity.idCardInfo = IDCardInfo(
                 name = name,
                 idNumber = idNumber,
                 gender = findViewById<EditText>(R.id.etGender).text.toString().trim(),
                 address = findViewById<EditText>(R.id.etAddress).text.toString().trim()
             )
-            MainActivity.currentIdCardBitmap = null
+            MainActivity.idCardBitmap = null
             
             startActivity(Intent(this, FaceVerifyActivity::class.java))
         }

@@ -191,3 +191,4 @@ class OcrActivity : AppCompatActivity() {
         startActivity(Intent(this, FaceVerifyActivity::class.java))
     }
 }
+
