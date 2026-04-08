@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.medicalapp.face.AliyunFaceHelper
@@ -19,78 +20,64 @@ class FaceVerifyActivity : AppCompatActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_face_verify)
         
-        try {
-            setContentView(R.layout.activity_face_verify)
-            LogActivity.addLog("FaceVerifyActivity", "onCreate started")
-        } catch (e: Exception) {
-            android.widget.Toast.makeText(this, "布局加载失败: " + e.message, android.widget.Toast.LENGTH_LONG).show()
-            LogActivity.addLog("FaceVerifyActivity", "setContentView error: " + e.message)
+        LogActivity.addLog("FaceVerifyActivity", "onCreate started")
+        
+        aliyunFaceHelper = AliyunFaceHelper()
+        
+        val tvInfo = findViewById<TextView>(R.id.tvInfo)
+        val btnStartCamera = findViewById<Button>(R.id.btnStartCamera)
+        val btnSave = findViewById<Button>(R.id.btnSave)
+        val btnBack = findViewById<Button>(R.id.btnBack)
+        val btnLogs = findViewById<Button>(R.id.btnLogs)
+        
+        val info = MainActivity.idCardInfo
+        if (info != null) {
+            tvInfo.text = "姓名：${info.name}\n身份证号：${info.idNumber}"
+            LogActivity.addLog("FaceVerifyActivity", "ID info loaded: " + info.name)
+        } else {
+            tvInfo.text = "错误：未找到身份信息"
+            LogActivity.addLog("FaceVerifyActivity", "ERROR: No ID info")
+            Toast.makeText(this, "请先录入身份信息", Toast.LENGTH_LONG).show()
             finish()
             return
         }
         
-        try {
-            aliyunFaceHelper = AliyunFaceHelper()
-            LogActivity.addLog("FaceVerifyActivity", "AliyunFaceHelper initialized")
-            
-            findViewById<TextView>(R.id.tvTitle).text = "人脸拍照识别验证"
-            findViewById<Button>(R.id.btnStartCamera).text = "开始人脸拍照"
-            findViewById<Button>(R.id.btnBack).text = "返回"
-            findViewById<Button>(R.id.btnLogs).text = "查看日志"
-            
-            val info = MainActivity.currentIdCardInfo
-            if (info != null) {
-                findViewById<TextView>(R.id.tvInfo).text = "姓名：" + info.name + "\n身份证号：" + info.idNumber
-                LogActivity.addLog("FaceVerifyActivity", "ID info loaded: " + info.name)
-            } else {
-                findViewById<TextView>(R.id.tvInfo).text = "警告：未找到身份信息"
-                LogActivity.addLog("FaceVerifyActivity", "WARNING: No ID info found")
-                android.widget.Toast.makeText(this, "请先输入身份信息", android.widget.Toast.LENGTH_LONG).show()
-            }
-            
-            findViewById<Button>(R.id.btnStartCamera).setOnClickListener {
-                LogActivity.addLog("FaceVerifyActivity", "Start camera clicked")
-                startActivityForResult(
-                    Intent(this, FaceCaptureActivity::class.java),
-                    FACE_CAPTURE
-                )
-            }
-            
-            findViewById<Button>(R.id.btnBack).setOnClickListener { 
-                LogActivity.addLog("FaceVerifyActivity", "Back clicked")
-                finish() 
-            }
-            
-            findViewById<Button>(R.id.btnLogs).setOnClickListener {
-                startActivity(Intent(this, LogActivity::class.java))
-            }
-            
-            LogActivity.addLog("FaceVerifyActivity", "onCreate completed")
-        } catch (e: Exception) {
-            LogActivity.addLog("FaceVerifyActivity", "init error: " + e.message)
-            android.widget.Toast.makeText(this, "初始化失败: " + e.message, android.widget.Toast.LENGTH_LONG).show()
-            e.printStackTrace()
+        // 隐藏保存按钮，验证通过后才显示
+        btnSave.visibility = android.view.View.GONE
+        
+        btnStartCamera.setOnClickListener {
+            startActivityForResult(
+                Intent(this, FaceCaptureActivity::class.java),
+                FACE_CAPTURE
+            )
+        }
+        
+        btnSave.setOnClickListener {
+            saveIdentity()
+        }
+        
+        btnBack.setOnClickListener { finish() }
+        
+        btnLogs.setOnClickListener {
+            startActivity(Intent(this, LogActivity::class.java))
         }
     }
     
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        LogActivity.addLog("FaceVerifyActivity", "onActivityResult: requestCode=" + requestCode + ", resultCode=" + resultCode)
+        LogActivity.addLog("FaceVerifyActivity", "onActivityResult: requestCode=$requestCode, resultCode=$resultCode")
         
         if (requestCode == FACE_CAPTURE && resultCode == RESULT_OK) {
             val faceBitmap = FaceCaptureActivity.capturedFaceBitmap
-            LogActivity.addLog("FaceVerifyActivity", "Face bitmap is null: " + (faceBitmap == null))
             
             if (faceBitmap != null) {
-                LogActivity.addLog("FaceVerifyActivity", "Face captured, starting comparison")
                 performFaceCompare(faceBitmap)
             } else {
                 findViewById<TextView>(R.id.tvStatus).text = "拍照失败，请重试"
                 LogActivity.addLog("FaceVerifyActivity", "ERROR: Face bitmap is null")
             }
-        } else {
-            LogActivity.addLog("FaceVerifyActivity", "Face capture cancelled or failed")
         }
     }
     
@@ -98,33 +85,64 @@ class FaceVerifyActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 findViewById<TextView>(R.id.tvStatus).text = "比对中..."
-                LogActivity.addLog("FaceVerifyActivity", "Starting face comparison...")
                 
-                val idCardBitmap = MainActivity.currentIdCardBitmap
+                val idCardBitmap = MainActivity.idCardBitmap
                 if (idCardBitmap == null) {
                     findViewById<TextView>(R.id.tvStatus).text = "错误：没有身份证照片"
-                    LogActivity.addLog("FaceVerifyActivity", "ERROR: No ID card bitmap")
                     return@launch
                 }
                 
-                LogActivity.addLog("FaceVerifyActivity", "Calling Aliyun API...")
+                // 使用 test7 的阿里云比对
                 val result = withContext(Dispatchers.IO) {
                     aliyunFaceHelper.compareFaces(idCardBitmap, faceBitmap)
                 }
                 
                 val score = result.first
                 MainActivity.faceCompareScore = score
-                MainActivity.faceCompareMessage = result.second
                 
-                LogActivity.addLog("FaceVerifyActivity", "Comparison result: score=" + score + ", msg=" + result.second)
+                LogActivity.addLog("FaceVerifyActivity", "Comparison result: score=$score")
                 
-                startActivity(Intent(this@FaceVerifyActivity, ResultActivity::class.java))
+                val similarity = String.format("%.1f", score)
+                findViewById<TextView>(R.id.tvStatus).text = "相似度：$similarity%"
+                
+                if (score > 60.0) {
+                    // 验证通过，显示保存按钮
+                    findViewById<Button>(R.id.btnSave).visibility = android.view.View.VISIBLE
+                    findViewById<Button>(R.id.btnSave).text = "✅ 验证通过，保存身份信息"
+                    Toast.makeText(this@FaceVerifyActivity, "人脸识别通过", Toast.LENGTH_SHORT).show()
+                } else {
+                    findViewById<TextView>(R.id.tvStatus).text = "相似度：$similarity%（未通过，请重试）"
+                    Toast.makeText(this@FaceVerifyActivity, "验证未通过，请重新拍照", Toast.LENGTH_LONG).show()
+                }
                 
             } catch (e: Exception) {
                 findViewById<TextView>(R.id.tvStatus).text = "比对错误：" + e.message
                 LogActivity.addLog("FaceVerifyActivity", "Comparison error: " + e.message)
-                e.printStackTrace()
             }
         }
+    }
+    
+    private fun saveIdentity() {
+        MainActivity.isIdentityVerified = true
+        
+        val info = MainActivity.idCardInfo
+        val logEntry = """
+            【身份信息保存】
+            姓名：${info?.name ?: "未知"}
+            身份证号：${info?.idNumber ?: "未知"}
+            人脸相似度：${String.format("%.1f", MainActivity.faceCompareScore)}%
+            验证时间：${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.CHINA).format(java.util.Date())}
+            ====================
+        """.trimIndent()
+        
+        LogActivity.addLog("IdentitySave", logEntry)
+        
+        Toast.makeText(this, "身份信息已保存", Toast.LENGTH_SHORT).show()
+        
+        // 返回首页
+        val intent = Intent(this, MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
+        finish()
     }
 }
