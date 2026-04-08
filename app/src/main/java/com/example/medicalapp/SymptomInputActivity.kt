@@ -48,7 +48,6 @@ class SymptomInputActivity : AppCompatActivity() {
             LogActivity.addLog("SymptomInputActivity", "Symptom saved: " + symptom)
             Toast.makeText(this, "症状已记录", Toast.LENGTH_SHORT).show()
             
-            // 返回首页
             val intent = Intent(this, MainActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
             startActivity(intent)
@@ -64,7 +63,7 @@ class SymptomInputActivity : AppCompatActivity() {
             startActivity(Intent(this, LogActivity::class.java))
         }
         
-        LogActivity.addLog("SymptomInputActivity", "onCreate completed")
+        LogActivity.addLog("SymptomInputActivity", "onCreate completed successfully")
     }
     
     private fun checkPermissionAndStartVoice() {
