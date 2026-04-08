@@ -29,33 +29,14 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".ManualInputActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".OcrActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".FaceVerifyActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ResultActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".FaceCaptureActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".LogActivity"
-            android:exported="false" />
+        <activity android:name=".IdentityMethodActivity" android:exported="false" />
+        <activity android:name=".ManualInputActivity" android:exported="false" />
+        <activity android:name=".OcrActivity" android:exported="false" />
+        <activity android:name=".FaceVerifyActivity" android:exported="false" />
+        <activity android:name=".FaceCaptureActivity" android:exported="false" />
+        <activity android:name=".SymptomInputActivity" android:exported="false" />
+        <activity android:name=".LogActivity" android:exported="false" />
 
     </application>
 
 </manifest>
-
-
-
