@@ -3,6 +3,14 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { stream ->
+        localProperties.load(stream)
+    }
+}
+
 android {
     namespace 'com.example.medicalapp'
     compileSdk 34
@@ -14,9 +22,12 @@ android {
         versionCode 1
         versionName "1.0"
         
-        // 阿里云密钥（从 GitHub Secrets 读取）
-        buildConfigField "String", "ALIYUN_ACCESS_KEY_ID", "\"${System.getenv('ALIYUN_ACCESS_KEY_ID')}\""
-        buildConfigField "String", "ALIYUN_ACCESS_KEY_SECRET", "\"${System.getenv('ALIYUN_ACCESS_KEY_SECRET')}\""
+        // 从 local.properties 读取阿里云密钥
+        def aliKeyId = localProperties.getProperty('aliyun.accessKeyId', 'your_access_key_id')
+        def aliKeySecret = localProperties.getProperty('aliyun.accessKeySecret', 'your_access_key_secret')
+        
+        buildConfigField "String", "ALIYUN_ACCESS_KEY_ID", "\"${aliKeyId}\""
+        buildConfigField "String", "ALIYUN_ACCESS_KEY_SECRET", "\"${aliKeySecret}\""
     }
 
     buildTypes {

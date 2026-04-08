@@ -1,4 +1,4 @@
-﻿package com.example.medicalapp.face
+package com.example.medicalapp.face
 
 import android.graphics.Bitmap
 import android.util.Base64
@@ -27,8 +27,6 @@ class AliyunFaceHelper {
     }
     
     suspend fun compareFaces(idCardBitmap: Bitmap, cameraBitmap: Bitmap): Pair<Double, String> {
-        android.util.Log.d("AliyunFace", "AccessKeyId: ${accessKeyId.take(4)}...")  // 只显示前4位
-        android.util.Log.d("AliyunFace", "AccessKeySecret: ${accessKeySecret.take(4)}...")  // 只显示前4位
         return withContext(Dispatchers.IO) {
             try {
                 if (accessKeyId.isEmpty() || accessKeySecret.isEmpty()) {
@@ -133,4 +131,3 @@ class AliyunFaceHelper {
     
     fun close() {}
 }
-
