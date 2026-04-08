@@ -237,7 +237,7 @@ class SymptomInputActivity : AppCompatActivity() {
         }
         
         if (resultJson.has("err_msg")) {
-            LogActivity.addLog("SymptomInputActivity", "API error: ${resultJson.getString('err_msg')}")
+            LogActivity.addLog("SymptomInputActivity", "API error: ${resultJson.getString("err_msg")}")
         }
         return ""
     }
@@ -279,3 +279,4 @@ class SymptomInputActivity : AppCompatActivity() {
         }
     }
 }
+
