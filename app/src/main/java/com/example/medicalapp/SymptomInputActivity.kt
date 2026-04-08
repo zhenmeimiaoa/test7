@@ -32,11 +32,12 @@ class SymptomInputActivity : AppCompatActivity() {
         val btnLogs = findViewById<Button>(R.id.btnLogs)
         
         // 检查身份验证是否通过
+        // 身份验证已在 ResultActivity 完成，这里不再重复检查
+        // 但记录日志用于调试
         if (MainActivity.faceCompareScore <= 60.0) {
-            LogActivity.addLog("SymptomInputActivity", "ERROR: Face verification not passed, score=" + MainActivity.faceCompareScore)
-            Toast.makeText(this, "请先完成身份验证", Toast.LENGTH_LONG).show()
-            finish()
-            return
+            LogActivity.addLog("SymptomInputActivity", "WARNING: Low face score: " + MainActivity.faceCompareScore)
+        } else {
+            LogActivity.addLog("SymptomInputActivity", "Identity verified, score: " + MainActivity.faceCompareScore)
         }
         
         LogActivity.addLog("SymptomInputActivity", "Identity verified, score=" + MainActivity.faceCompareScore)

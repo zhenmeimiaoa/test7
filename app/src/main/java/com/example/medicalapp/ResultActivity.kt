@@ -32,6 +32,7 @@ class ResultActivity : AppCompatActivity() {
             val similarity = String.format("%.1f", score)
             
             LogActivity.addLog("ResultActivity", "Result: score=" + score + ", similarity=" + similarity + "%")
+            LogActivity.addLog("ResultActivity", "ID info: " + (MainActivity.currentIdCardInfo?.name ?: "null"))
             
             if (score > 60.0) {
                 // 验证通过
@@ -45,7 +46,9 @@ class ResultActivity : AppCompatActivity() {
                 btnNext.text = "下一步：录入症状"
                 btnNext.setOnClickListener {
                     LogActivity.addLog("ResultActivity", "Next clicked, starting SymptomInputActivity")
+                    // 注意：这里不清空数据，直接跳转
                     startActivity(Intent(this, SymptomInputActivity::class.java))
+                    // 不调用 finish()，保持当前Activity在栈中，返回时可以回到这里
                 }
                 
             } else {
@@ -63,10 +66,14 @@ class ResultActivity : AppCompatActivity() {
             
             btnBackHome.text = "返回首页"
             btnBackHome.setOnClickListener {
-                LogActivity.addLog("ResultActivity", "Back to home clicked")
+                LogActivity.addLog("ResultActivity", "Back to home clicked - clearing all data")
+                // 只有返回首页时才清空所有数据
                 MainActivity.currentIdCardInfo = null
                 MainActivity.currentIdCardBitmap = null
+                MainActivity.faceCompareScore = 0.0
+                MainActivity.faceCompareMessage = ""
                 MainActivity.currentSymptom = ""
+                
                 val intent = Intent(this, MainActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
                 startActivity(intent)
