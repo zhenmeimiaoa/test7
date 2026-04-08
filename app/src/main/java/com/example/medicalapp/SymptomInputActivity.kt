@@ -24,7 +24,6 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
-import java.io.File
 
 class SymptomInputActivity : AppCompatActivity() {
     
@@ -206,29 +205,44 @@ class SymptomInputActivity : AppCompatActivity() {
             return ""
         }
         
-        // 调用语音识别API
-        val speechUrl = "https://vop.baidu.com/server_api?dev_pid=1537&cuid=${BaiduSpeechConfig.APP_ID}&token=$accessToken"
-        
+        // 使用 RAW 方式提交音频（更可靠）
         val audioBase64 = android.util.Base64.encodeToString(pcmData, android.util.Base64.NO_WRAP)
         
+        // 构建 JSON 请求体 - 严格按照百度API文档
         val jsonBody = JSONObject().apply {
             put("format", "pcm")
             put("rate", 16000)
+            put("dev_pid", 1537)
             put("channel", 1)
-            put("cuid", BaiduSpeechConfig.APP_ID)
             put("token", accessToken)
-            put("speech", audioBase64)
+            put("cuid", BaiduSpeechConfig.APP_ID)
             put("len", pcmData?.size ?: 0)
+            put("speech", audioBase64)
         }
         
+        LogActivity.addLog("SymptomInputActivity", "Request: format=pcm, rate=16000, len=${pcmData?.size}")
+        
         val requestBody = jsonBody.toString().toRequestBody("application/json".toMediaType())
-        val request = Request.Builder().url(speechUrl).post(requestBody).build()
+        val request = Request.Builder()
+            .url("https://vop.baidu.com/server_api")
+            .post(requestBody)
+            .build()
         
         val response = client.newCall(request).execute()
         val responseBody = response.body?.string() ?: "{}"
         LogActivity.addLog("SymptomInputActivity", "API response: $responseBody")
         
         val resultJson = JSONObject(responseBody)
+        
+        // 检查错误码
+        val errNo = resultJson.optInt("err_no", -1)
+        if (errNo != 0) {
+            val errMsg = resultJson.optString("err_msg", "unknown error")
+            LogActivity.addLog("SymptomInputActivity", "API error $errNo: $errMsg")
+            return ""
+        }
+        
+        // 获取识别结果
         if (resultJson.has("result")) {
             val resultArray = resultJson.getJSONArray("result")
             if (resultArray.length() > 0) {
@@ -236,9 +250,6 @@ class SymptomInputActivity : AppCompatActivity() {
             }
         }
         
-        if (resultJson.has("err_msg")) {
-            LogActivity.addLog("SymptomInputActivity", "API error: ${resultJson.getString("err_msg")}")
-        }
         return ""
     }
     
@@ -279,4 +290,3 @@ class SymptomInputActivity : AppCompatActivity() {
         }
     }
 }
-
