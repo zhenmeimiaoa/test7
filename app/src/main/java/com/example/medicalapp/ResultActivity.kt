@@ -35,30 +35,23 @@ class ResultActivity : AppCompatActivity() {
             LogActivity.addLog("ResultActivity", "ID info: " + (MainActivity.currentIdCardInfo?.name ?: "null"))
             
             if (score > 60.0) {
-                // 验证通过
                 tvResult.text = "人脸识别通过"
                 tvResult.setTextColor(android.graphics.Color.parseColor("#4CAF50"))
                 findViewById<android.view.View>(R.id.layoutResult).setBackgroundColor(android.graphics.Color.parseColor("#E8F5E9"))
                 LogActivity.addLog("ResultActivity", "PASS: similarity > 60%")
                 
-                // 显示下一步按钮（进入症状录入）
                 btnNext.visibility = android.view.View.VISIBLE
                 btnNext.text = "下一步：录入症状"
                 btnNext.setOnClickListener {
                     LogActivity.addLog("ResultActivity", "Next clicked, starting SymptomInputActivity")
-                    // 注意：这里不清空数据，直接跳转
-                    startActivity(Intent(this, SymptomInputActivity::class.java))
-                    // 不调用 finish()，保持当前Activity在栈中，返回时可以回到这里
+                    val intent = Intent(this, SymptomInputActivity::class.java)
+                    startActivity(intent)
                 }
-                
             } else {
-                // 验证不通过
                 tvResult.text = "人脸识别不通过"
                 tvResult.setTextColor(android.graphics.Color.parseColor("#F44336"))
                 findViewById<android.view.View>(R.id.layoutResult).setBackgroundColor(android.graphics.Color.parseColor("#FFEBEE"))
                 LogActivity.addLog("ResultActivity", "FAIL: similarity <= 60%")
-                
-                // 隐藏下一步按钮
                 btnNext.visibility = android.view.View.GONE
             }
             
@@ -67,7 +60,6 @@ class ResultActivity : AppCompatActivity() {
             btnBackHome.text = "返回首页"
             btnBackHome.setOnClickListener {
                 LogActivity.addLog("ResultActivity", "Back to home clicked - clearing all data")
-                // 只有返回首页时才清空所有数据
                 MainActivity.currentIdCardInfo = null
                 MainActivity.currentIdCardBitmap = null
                 MainActivity.faceCompareScore = 0.0
