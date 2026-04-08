@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.speech.RecognizerIntent
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -12,11 +11,17 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.baidu.speech.EventListener
+import com.baidu.speech.EventManager
+import com.baidu.speech.EventManagerFactory
+import com.baidu.speech.asr.SpeechConstant
+import org.json.JSONObject
 
-class SymptomInputActivity : AppCompatActivity() {
+class SymptomInputActivity : AppCompatActivity(), EventListener {
     
     private val RECORD_AUDIO_REQUEST_CODE = 101
-    private val VOICE_REQUEST_CODE = 100
+    private var asr: EventManager? = null
+    private var isRecording = false
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,7 +29,7 @@ class SymptomInputActivity : AppCompatActivity() {
         
         LogActivity.addLog("SymptomInputActivity", "onCreate started")
         
-        // 再次检查身份验证（双重保险）
+        // 检查身份验证
         if (!MainActivity.isIdentityVerified) {
             Toast.makeText(this, "请先完成身份验证", Toast.LENGTH_LONG).show()
             LogActivity.addLog("SymptomInputActivity", "Blocked: identity not verified")
@@ -43,8 +48,15 @@ class SymptomInputActivity : AppCompatActivity() {
         val info = MainActivity.idCardInfo
         tvIdentityInfo.text = "当前患者：${info?.name ?: "未知"}（已验证）"
         
+        // 初始化百度语音识别
+        initBaiduASR()
+        
         btnVoiceInput.setOnClickListener {
-            checkPermissionAndStartVoice()
+            if (isRecording) {
+                stopVoiceRecognition()
+            } else {
+                checkPermissionAndStartVoice()
+            }
         }
         
         btnSave.setOnClickListener {
@@ -53,7 +65,6 @@ class SymptomInputActivity : AppCompatActivity() {
                 Toast.makeText(this, "请先输入症状", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            
             saveSymptom(symptom)
         }
         
@@ -64,6 +75,128 @@ class SymptomInputActivity : AppCompatActivity() {
         }
         
         LogActivity.addLog("SymptomInputActivity", "onCreate completed for: " + (info?.name ?: "unknown"))
+    }
+    
+    private fun initBaiduASR() {
+        try {
+            asr = EventManagerFactory.create(this, "asr")
+            asr?.registerListener(this)
+            LogActivity.addLog("SymptomInputActivity", "Baidu ASR initialized")
+        } catch (e: Exception) {
+            LogActivity.addLog("SymptomInputActivity", "Baidu ASR init failed: " + e.message)
+            Toast.makeText(this, "语音初始化失败: " + e.message, Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun checkPermissionAndStartVoice() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) 
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, 
+                arrayOf(Manifest.permission.RECORD_AUDIO), 
+                RECORD_AUDIO_REQUEST_CODE)
+        } else {
+            startVoiceRecognition()
+        }
+    }
+    
+    private fun startVoiceRecognition() {
+        try {
+            val params = LinkedHashMap<String, Any>()
+            params[SpeechConstant.APP_ID] = BaiduSpeechConfig.APP_ID
+            params[SpeechConstant.API_KEY] = BaiduSpeechConfig.API_KEY
+            params[SpeechConstant.SECRET_KEY] = BaiduSpeechConfig.SECRET_KEY
+            
+            // 识别参数
+            params[SpeechConstant.DECODER] = 0 // 纯在线识别
+            params[SpeechConstant.VAD] = SpeechConstant.VAD_DNN
+            params[SpeechConstant.PID] = 1537 // 普通话输入法模型
+            params[SpeechConstant.ACCEPT_AUDIO_VOLUME] = false
+            
+            val json = JSONObject(params as Map<*, *>).toString()
+            
+            asr?.send(SpeechConstant.ASR_START, json, null, 0, 0)
+            isRecording = true
+            
+            findViewById<Button>(R.id.btnVoiceInput).text = "🎙️ 停止录音"
+            findViewById<Button>(R.id.btnVoiceInput).backgroundTintList = getColorStateList(android.R.color.holo_red_dark)
+            
+            Toast.makeText(this, "请说话...", Toast.LENGTH_SHORT).show()
+            LogActivity.addLog("SymptomInputActivity", "Baidu ASR started")
+            
+        } catch (e: Exception) {
+            Toast.makeText(this, "启动失败: " + e.message, Toast.LENGTH_SHORT).show()
+            LogActivity.addLog("SymptomInputActivity", "Baidu ASR error: " + e.message)
+        }
+    }
+    
+    private fun stopVoiceRecognition() {
+        asr?.send(SpeechConstant.ASR_STOP, null, null, 0, 0)
+        isRecording = false
+        
+        findViewById<Button>(R.id.btnVoiceInput).text = "🎤 语音输入"
+        findViewById<Button>(R.id.btnVoiceInput).backgroundTintList = getColorStateList(android.R.color.holo_orange_dark)
+        
+        LogActivity.addLog("SymptomInputActivity", "Baidu ASR stopped")
+    }
+    
+    override fun onEvent(name: String?, params: String?, data: ByteArray?, offset: Int, length: Int) {
+        when (name) {
+            SpeechConstant.CALLBACK_EVENT_ASR_READY -> {
+                LogActivity.addLog("SymptomInputActivity", "ASR Ready")
+            }
+            SpeechConstant.CALLBACK_EVENT_ASR_BEGIN -> {
+                runOnUiThread {
+                    Toast.makeText(this, "开始识别...", Toast.LENGTH_SHORT).show()
+                }
+            }
+            SpeechConstant.CALLBACK_EVENT_ASR_END -> {
+                LogActivity.addLog("SymptomInputActivity", "ASR End")
+            }
+            SpeechConstant.CALLBACK_EVENT_ASR_PARTIAL -> {
+                // 临时结果
+                try {
+                    val json = JSONObject(params ?: "{}")
+                    val results = json.optJSONArray("results_recognition")
+                    if (results != null && results.length() > 0) {
+                        val text = results.getString(0)
+                        runOnUiThread {
+                            findViewById<EditText>(R.id.etSymptom).setText(text)
+                        }
+                    }
+                } catch (e: Exception) {
+                    LogActivity.addLog("SymptomInputActivity", "Partial result error: " + e.message)
+                }
+            }
+            SpeechConstant.CALLBACK_EVENT_ASR_FINISH -> {
+                // 最终结果
+                try {
+                    val json = JSONObject(params ?: "{}")
+                    val results = json.optJSONArray("results_recognition")
+                    if (results != null && results.length() > 0) {
+                        val text = results.getString(0)
+                        runOnUiThread {
+                            findViewById<EditText>(R.id.etSymptom).setText(text)
+                            findViewById<Button>(R.id.btnVoiceInput).text = "🎤 语音输入"
+                            findViewById<Button>(R.id.btnVoiceInput).backgroundTintList = getColorStateList(android.R.color.holo_orange_dark)
+                            Toast.makeText(this, "识别完成", Toast.LENGTH_SHORT).show()
+                            LogActivity.addLog("SymptomInputActivity", "ASR result: $text")
+                        }
+                    }
+                    isRecording = false
+                } catch (e: Exception) {
+                    LogActivity.addLog("SymptomInputActivity", "Finish result error: " + e.message)
+                }
+            }
+            SpeechConstant.CALLBACK_EVENT_ASR_ERROR -> {
+                runOnUiThread {
+                    isRecording = false
+                    findViewById<Button>(R.id.btnVoiceInput).text = "🎤 语音输入"
+                    findViewById<Button>(R.id.btnVoiceInput).backgroundTintList = getColorStateList(android.R.color.holo_orange_dark)
+                    Toast.makeText(this, "识别出错，请重试", Toast.LENGTH_SHORT).show()
+                    LogActivity.addLog("SymptomInputActivity", "ASR error: $params")
+                }
+            }
+        }
     }
     
     private fun saveSymptom(symptom: String) {
@@ -83,47 +216,10 @@ class SymptomInputActivity : AppCompatActivity() {
         
         Toast.makeText(this, "病症信息已保存", Toast.LENGTH_SHORT).show()
         
-        // 返回首页
         val intent = Intent(this, MainActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
         startActivity(intent)
         finish()
-    }
-    
-    private fun checkPermissionAndStartVoice() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) 
-            != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, 
-                arrayOf(Manifest.permission.RECORD_AUDIO), 
-                RECORD_AUDIO_REQUEST_CODE)
-        } else {
-            startVoiceRecognition()
-        }
-    }
-    
-    private fun startVoiceRecognition() {
-        try {
-            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "zh-CN")
-                putExtra(RecognizerIntent.EXTRA_PROMPT, "请描述您的症状...")
-            }
-            startActivityForResult(intent, VOICE_REQUEST_CODE)
-            LogActivity.addLog("SymptomInputActivity", "Voice recognition started")
-        } catch (e: Exception) {
-            Toast.makeText(this, "语音识别不可用", Toast.LENGTH_SHORT).show()
-        }
-    }
-    
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == VOICE_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
-            val results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
-            if (!results.isNullOrEmpty()) {
-                findViewById<EditText>(R.id.etSymptom).setText(results[0])
-                LogActivity.addLog("SymptomInputActivity", "Voice recognized: " + results[0])
-            }
-        }
     }
     
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -133,5 +229,12 @@ class SymptomInputActivity : AppCompatActivity() {
             startVoiceRecognition()
         }
     }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        if (isRecording) {
+            asr?.send(SpeechConstant.ASR_STOP, null, null, 0, 0)
+        }
+        asr?.unregisterListener(this)
+    }
 }
-
