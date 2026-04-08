@@ -1,9 +1,9 @@
-package com.example.medicalapp.ocr
+锘縫ackage com.example.medicalapp.ocr
 
 import android.graphics.Bitmap
 import android.util.Base64
 import android.util.Log
-import com.example.medicalapp.model.IDCardInfo
+import com.example.medicalapp.IDCardInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.FormBody
@@ -164,10 +164,10 @@ class IDCardOCRHelper {
                 return null
             }
 
-            val name = extractField(wordsResult, "姓名")
-            val idNumber = extractField(wordsResult, "公民身份号码")
-            val gender = extractField(wordsResult, "性别")
-            val address = extractField(wordsResult, "住址")
+            val name = extractField(wordsResult, "濮撳悕")
+            val idNumber = extractField(wordsResult, "鍏皯韬唤鍙风爜")
+            val gender = extractField(wordsResult, "鎬у埆")
+            val address = extractField(wordsResult, "浣忓潃")
 
             Log.d(TAG, "Parsed - Name: $name, ID: $idNumber, Gender: $gender")
 
@@ -205,3 +205,4 @@ class IDCardOCRHelper {
 
     fun close() {}
 }
+
