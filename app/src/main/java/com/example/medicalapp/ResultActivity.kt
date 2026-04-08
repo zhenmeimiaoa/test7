@@ -28,11 +28,13 @@ class ResultActivity : AppCompatActivity() {
             val btnLogs = findViewById<Button>(R.id.btnLogs)
             
             val score = MainActivity.faceCompareScore
-            val similarity = String.format("%.1f", score * 100)
+            // 修复：score已经是0-100的百分比，不需要乘以100
+            val similarity = String.format("%.1f", score)
             
             LogActivity.addLog("ResultActivity", "Result: score=" + score + ", similarity=" + similarity + "%")
             
-            if (score > 0.6) {
+            // 修复：阈值应该是60（百分比），不是0.6
+            if (score > 60.0) {
                 tvResult.text = "人脸识别通过"
                 tvResult.setTextColor(android.graphics.Color.parseColor("#4CAF50"))
                 findViewById<android.view.View>(R.id.layoutResult).setBackgroundColor(android.graphics.Color.parseColor("#E8F5E9"))
