@@ -4,9 +4,13 @@ plugins {
 }
 
 android {
+    cmakeVersion '3.31.6'
     ndkVersion '25.1.8937393'
 
     externalNativeBuild {
+    cmake {
+        path "src/main/cpp/CMakeLists.txt"
+    }
         cmake {
             path "src/main/cpp/CMakeLists.txt"
             
