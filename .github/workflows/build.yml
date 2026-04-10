@@ -22,6 +22,11 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
+    - name: Setup CMake
+      uses: jwlawrence/actions-setup-cmake@v2
+      with:
+        cmake-version: '3.31.6'
+
     - name: Create local.properties with secrets
       run: |
         echo "aliyun.accessKeyId=${{ secrets.ALIYUN_ACCESS_KEY_ID }}" > local.properties
