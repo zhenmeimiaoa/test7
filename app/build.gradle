@@ -14,10 +14,6 @@ android {
         versionCode 1
         versionName "1.0"
 
-        ndk {
-            abiFilters 'arm64-v8a', 'armeabi-v7a'
-        }
-
         def localProperties = new Properties()
         def localPropertiesFile = rootProject.file('local.properties')
         if (localPropertiesFile.exists()) {
@@ -25,8 +21,8 @@ android {
         }
         def aliKeyId = localProperties.getProperty('aliyun.accessKeyId', 'your_access_key_id')
         def aliKeySecret = localProperties.getProperty('aliyun.accessKeySecret', 'your_access_key_secret')
-        buildConfigField "String", "ALIYUN_ACCESS_KEY_ID", "\"\""
-        buildConfigField "String", "ALIYUN_ACCESS_KEY_SECRET", "\"\""
+        buildConfigField "String", "ALIYUN_ACCESS_KEY_ID", "\"${aliKeyId}\""
+        buildConfigField "String", "ALIYUN_ACCESS_KEY_SECRET", "\"${aliKeySecret}\""
     }
 
     buildTypes {
@@ -46,12 +42,13 @@ android {
         viewBinding true
         buildConfig true
     }
-    ndkVersion '25.1.8937393'
-    externalNativeBuild {
-        cmake {
-            path "src/main/cpp/llama/CMakeLists.txt"
-        }
-    }
+    // NDK/CMake 已禁用 - 本地AI模型待启用时取消注释
+    // ndkVersion '25.1.8937393'
+    // externalNativeBuild {
+    //     cmake {
+    //         path "src/main/cpp/llama/CMakeLists.txt"
+    //     }
+    // }
 }
 
 dependencies {
