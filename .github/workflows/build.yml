@@ -22,10 +22,13 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Setup CMake
-      uses: jwlawrence/actions-setup-cmake@v2
-      with:
-        cmake-version: '3.31.6'
+    - name: Install CMake 3.31.6
+      run: |
+        wget -q https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6-linux-x86_64.tar.gz
+        tar -xzf cmake-3.31.6-linux-x86_64.tar.gz
+        sudo mv cmake-3.31.6-linux-x86_64 /opt/cmake-3.31.6
+        sudo ln -sf /opt/cmake-3.31.6/bin/cmake /usr/local/bin/cmake
+        cmake --version
 
     - name: Create local.properties with secrets
       run: |
