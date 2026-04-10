@@ -2,9 +2,9 @@ package com.example.medicalapp.llama.internal.gguf
 
 import android.content.Context
 import android.net.Uri
-import com.arm.aichat.gguf.GgufMetadata
-import com.arm.aichat.gguf.GgufMetadataReader
-import com.arm.aichat.gguf.InvalidFileFormatException
+import com.example.medicalapp.llama.gguf.GgufMetadata
+import com.example.medicalapp.llama.gguf.GgufMetadataReader
+import com.example.medicalapp.llama.gguf.InvalidFileFormatException
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -88,7 +88,7 @@ internal class GgufMetadataReaderImpl(
     override suspend fun ensureSourceFileFormat(context: Context, uri: Uri): Boolean =
         context.contentResolver.openInputStream(uri)?.buffered()?.use { ensureMagic(it) } == true
 
-    /** Reads the 4‑byte magic; throws if magic �?"GGUF". */
+    /** Reads the 4鈥慴yte magic; throws if magic 鈮?"GGUF". */
     private fun ensureMagic(input: InputStream): Boolean =
         ByteArray(4).let {
             if (input.read(it) != 4) throw IOException("Not a valid file!")
@@ -96,18 +96,18 @@ internal class GgufMetadataReaderImpl(
         }
 
     /**
-     * High‑level entry point: parses a `.gguf` file on disk and returns the fully
+     * High鈥憀evel entry point: parses a `.gguf` file on disk and returns the fully
      * populated [GgufMetadata] tree.
      *
      * Steps performed internally:
-     * 1.  Reads and validates the 8‑byte header (`"GGUF"` magic + version).
-     * 2.  Streams through the key‑value section, skipping large blobs if the key
+     * 1.  Reads and validates the 8鈥慴yte header (`"GGUF"` magic + version).
+     * 2.  Streams through the key鈥憊alue section, skipping large blobs if the key
      *     appears in [skipKeys] or if an array exceeds [arraySummariseThreshold].
-     * 3.  Converts the resulting raw map into strongly‑typed sub‑structures
+     * 3.  Converts the resulting raw map into strongly鈥憈yped sub鈥憇tructures
      *     (basic info, tokenizer, rope, etc.).
      *
-     * The method is STREAMING‑ONLY: tensors are never mapped or loaded into
-     * memory, so even multi‑GB model files can be processed in < 50 ms.
+     * The method is STREAMING鈥慜NLY: tensors are never mapped or loaded into
+     * memory, so even multi鈥慓B model files can be processed in < 50 ms.
      *
      * @param path Absolute or relative filesystem path to a `.gguf` file.
      * @return A [GgufMetadata] instance containing all recognised metadata plus
@@ -117,27 +117,27 @@ internal class GgufMetadataReaderImpl(
      *         or the metadata block is truncated / corrupt.
      */
     override suspend fun readStructuredMetadata(input: InputStream): GgufMetadata {
-        // ── 1. header ──────────────────────────────────────────────────────────
+        // 鈹€鈹€ 1. header 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
         // throws on mismatch
         val version       = ensureMagicAndVersion(input)
         val tensorCount   = readLittleLong(input)
         val kvCount       = readLittleLong(input)
 
-        // ── 2. metadata map (reuse our raw parser, but we need access to the stream) ──
+        // 鈹€鈹€ 2. metadata map (reuse our raw parser, but we need access to the stream) 鈹€鈹€
         val meta = readMetaMap(input, kvCount)    // <String, MetadataValue>
 
-        // ── 3. build structured object ────────────────────────────────────────
+        // 鈹€鈹€ 3. build structured object 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
         return buildStructured(meta, version, tensorCount, kvCount)
     }
 
-    /** Reads the 4‑byte magic + 4‑byte version; throws if magic �?"GGUF". */
+    /** Reads the 4鈥慴yte magic + 4鈥慴yte version; throws if magic 鈮?"GGUF". */
     private fun ensureMagicAndVersion(input: InputStream): GgufMetadata.GgufVersion {
         if (!ensureMagic(input)) throw InvalidFileFormatException()
         return GgufMetadata.GgufVersion.fromCode(readLEUInt32(input))
     }
 
     /**
-     * Read an unsigned 32‑bit little‑endian integer.
+     * Read an unsigned 32鈥慴it little鈥慹ndian integer.
      *
      * @throws IOException if fewer than four bytes are available.
      */
@@ -151,11 +151,11 @@ internal class GgufMetadataReaderImpl(
     }
 
     /**
-     * Low‑level helper that reads the entire “key-value�?section from the current
+     * Low鈥憀evel helper that reads the entire 鈥渒ey-value鈥?section from the current
      * stream position.
      *
      * @param input  Open stream positioned JUST AFTER the header.
-     * @param kvCnt  Number of key‑value pairs (taken from the header).
+     * @param kvCnt  Number of key鈥憊alue pairs (taken from the header).
      * @return       Mutable map with one [MetadataValue] for every key that is NOT skipped.
      *
      * The function honours [skipKeys] and [arraySummariseThreshold] by invoking
@@ -175,14 +175,14 @@ internal class GgufMetadataReaderImpl(
          }
 
     /**
-     * Converts a flat [Map]<[String], [MetadataValue]> into the strongly‑typed
+     * Converts a flat [Map]<[String], [MetadataValue]> into the strongly鈥憈yped
      * [GgufMetadata] tree used by the rest of the app.
      *
      * Only the keys listed in the spec are copied into dedicated data classes;
      * everything else is preserved in `GgufMetadata.allMetadata`.
      *
      * @param m            Raw key/value map.
-     * @param version      GGUF file‑format version (enum).
+     * @param version      GGUF file鈥慺ormat version (enum).
      * @param tensorCnt    Number of tensors (from the header).
      * @param kvCnt        Total metadata pair count (from the header).
      */
@@ -418,7 +418,7 @@ internal class GgufMetadataReaderImpl(
             val count    = len.toInt()
 
             if (arraySummariseThreshold >= 0 && count > arraySummariseThreshold) {
-                // fast‑forward without allocation
+                // fast鈥慺orward without allocation
                 repeat(count) { skipValue(input, elemType) }
                 MetadataValue.StringVal("Array($elemType, $count items) /* summarised */")
             } else {
@@ -537,14 +537,14 @@ internal class GgufMetadataReaderImpl(
             (bytes[0].toInt() and 0xFF)
 
     /**
-     * Robust skip that works the same on JDK 11 and Android’s desugared runtime.
+     * Robust skip that works the same on JDK 11 and Android鈥檚 desugared runtime.
      *
      * @param n  Number of bytes to advance in the stream.
      * @throws IOException on premature EOF.
      */
     private fun InputStream.skipFully(n: Long) {
         var remaining = n
-        val scratch = ByteArray(8192)                 // read‑and‑toss buffer
+        val scratch = ByteArray(8192)                 // read鈥慳nd鈥憈oss buffer
         while (remaining > 0) {
             val skipped = skip(remaining)
             when {
@@ -579,8 +579,8 @@ internal class GgufMetadataReaderImpl(
     }
 
     /**
-     * Read EXACTLY `n` bytes or throw �?never returns a partially‑filled array.
-     * This is used for small fixed‑length reads (e.g. 4‑byte type codes).
+     * Read EXACTLY `n` bytes or throw 鈥?never returns a partially鈥慺illed array.
+     * This is used for small fixed鈥憀ength reads (e.g. 4鈥慴yte type codes).
      *
      * @throws IOException on premature EOF.
      */

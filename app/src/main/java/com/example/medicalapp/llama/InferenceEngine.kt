@@ -1,6 +1,6 @@
 package com.example.medicalapp.llama
 
-import com.arm.aichat.InferenceEngine.State
+import com.example.medicalapp.llama.InferenceEngine.State
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 

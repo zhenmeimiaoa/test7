@@ -2,7 +2,7 @@ package com.example.medicalapp.llama.gguf
 
 import android.content.Context
 import android.net.Uri
-import com.arm.aichat.internal.gguf.GgufMetadataReaderImpl
+import com.example.medicalapp.llama.internal.gguf.GgufMetadataReaderImpl
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -61,7 +61,7 @@ interface GgufMetadataReader {
          * Creates a GgufMetadataReader with custom configuration
          *
          * @param skipKeys Keys whose value should be skipped entirely (not kept in the result map)
-         * @param arraySummariseThreshold If â‰?, arrays longer get summarised, not materialised;
+         * @param arraySummariseThreshold If éˆ®?, arrays longer get summarised, not materialised;
          *                                If -1, never summarise.
          */
         fun create(

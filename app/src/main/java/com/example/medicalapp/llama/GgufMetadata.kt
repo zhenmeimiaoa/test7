@@ -27,13 +27,13 @@ data class GgufMetadata(
     val experts: ExpertsInfo? = null
 ) {
     enum class GgufVersion(val code: Int, val label: String) {
-        /** First public draft; little‑endian only, no alignment key. */
+        /** First public draft; little鈥慹ndian only, no alignment key. */
         LEGACY_V1(1, "Legacy v1"),
 
-        /** Added split‑file support and some extra metadata keys. */
+        /** Added split鈥慺ile support and some extra metadata keys. */
         EXTENDED_V2(2, "Extended v2"),
 
-        /** Current spec: endian‑aware, mandatory alignment, fully validated. */
+        /** Current spec: endian鈥慳ware, mandatory alignment, fully validated. */
         VALIDATED_V3(3, "Validated v3");
 
         companion object {

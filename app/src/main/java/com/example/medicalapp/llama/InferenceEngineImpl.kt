@@ -2,9 +2,9 @@ package com.example.medicalapp.llama.internal
 
 import android.content.Context
 import android.util.Log
-import com.arm.aichat.InferenceEngine
-import com.arm.aichat.UnsupportedArchitectureException
-import com.arm.aichat.internal.InferenceEngineImpl.Companion.getInstance
+import com.example.medicalapp.llama.InferenceEngine
+import com.example.medicalapp.llama.UnsupportedArchitectureException
+import com.example.medicalapp.llama.internal.InferenceEngineImpl.Companion.getInstance
 import dalvik.annotation.optimization.FastNative
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope

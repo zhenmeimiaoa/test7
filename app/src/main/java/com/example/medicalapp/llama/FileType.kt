@@ -5,7 +5,7 @@ import kotlin.collections.get
 
 /**
  * Numerical codes used by `general.file_type` (see llama.cpp repo's `constants.py`).
- * The `label` matches what llama‑cli prints.
+ * The `label` matches what llama鈥慶li prints.
  */
 enum class FileType(val code: Int, val label: String) {
     ALL_F32(0, "all F32"),
@@ -17,7 +17,7 @@ enum class FileType(val code: Int, val label: String) {
     MOSTLY_Q5_0(8, "Q5_0"),
     MOSTLY_Q5_1(9, "Q5_1"),
 
-    /* K‑quants ------------------------------------------------------------ */
+    /* K鈥憅uants ------------------------------------------------------------ */
     MOSTLY_Q2_K      (10, "Q2_K - Medium"),
     MOSTLY_Q3_K_S    (11, "Q3_K - Small"),
     MOSTLY_Q3_K_M    (12, "Q3_K - Medium"),
