@@ -1,4 +1,4 @@
-ï»¿package com.example.medicalapp
+package com.example.medicalapp
 
 import android.Manifest
 import android.content.Intent
@@ -36,7 +36,7 @@ class SymptomInputActivity : AppCompatActivity() {
     private var pcmData: ByteArray? = null
     private var currentSymptom: String = ""
     
-    // å½•éŸ³å‚æ•° - ç™¾åº¦APIè¦æ±‚ï¼šPCM 16kHz 16bit å•å£°é“
+    // Â¼Òô²ÎÊı - °Ù¶ÈAPIÒªÇó£ºPCM 16kHz 16bit µ¥ÉùµÀ
     private val SAMPLE_RATE = 16000
     private val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
     private val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
@@ -48,7 +48,7 @@ class SymptomInputActivity : AppCompatActivity() {
         LogActivity.addLog("SymptomInputActivity", "onCreate started")
         
         if (!MainActivity.isIdentityVerified) {
-            Toast.makeText(this, "è¯·å…ˆå®Œæˆèº«ä»½éªŒè¯", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "ÇëÏÈÍê³ÉÉí·İÑéÖ¤", Toast.LENGTH_LONG).show()
             finish()
             return
         }
@@ -62,12 +62,12 @@ class SymptomInputActivity : AppCompatActivity() {
         val btnBack = findViewById<Button>(R.id.btnBack)
         val btnLogs = findViewById<Button>(R.id.btnLogs)
         
-        // åˆå§‹éšè—AIåˆ†ææŒ‰é’®å’Œç»“æœ
+        // ³õÊ¼Òş²ØAI·ÖÎö°´Å¥ºÍ½á¹û
         btnAiAnalyze.visibility = android.view.View.GONE
         tvAiResult.visibility = android.view.View.GONE
         
         val info = MainActivity.idCardInfo
-        tvIdentityInfo.text = "å½“å‰æ‚£è€…ï¼š${info?.name ?: "æœªçŸ¥"}ï¼ˆå·²éªŒè¯ï¼‰"
+        tvIdentityInfo.text = "µ±Ç°»¼Õß£º${info?.name ?: "Î´Öª"}£¨ÒÑÑéÖ¤£©"
         
         btnVoiceInput.setOnClickListener {
             if (isRecording) {
@@ -82,7 +82,7 @@ class SymptomInputActivity : AppCompatActivity() {
             if (symptom.isNotEmpty()) {
                 analyzeSymptomWithAI(symptom)
             } else {
-                Toast.makeText(this, "è¯·å…ˆè¾“å…¥æˆ–è¯†åˆ«ç—‡çŠ¶", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "ÇëÏÈÊäÈë»òÊ¶±ğÖ¢×´", Toast.LENGTH_SHORT).show()
             }
         }
         
@@ -90,7 +90,7 @@ class SymptomInputActivity : AppCompatActivity() {
             val symptom = etSymptom.text.toString().trim()
             val aiResult = tvAiResult.text.toString()
             if (symptom.isEmpty()) {
-                Toast.makeText(this, "è¯·å…ˆè¾“å…¥ç—‡çŠ¶", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "ÇëÏÈÊäÈëÖ¢×´", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             saveSymptom(symptom, aiResult)
@@ -123,7 +123,7 @@ class SymptomInputActivity : AppCompatActivity() {
             )
             
             if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
-                Toast.makeText(this, "å½•éŸ³åˆå§‹åŒ–å¤±è´¥", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Â¼Òô³õÊ¼»¯Ê§°Ü", Toast.LENGTH_SHORT).show()
                 return
             }
             
@@ -131,9 +131,9 @@ class SymptomInputActivity : AppCompatActivity() {
             isRecording = true
             audioRecord?.startRecording()
             
-            btnVoiceInput.text = "ğŸ™ï¸ åœæ­¢å½•éŸ³"
+            btnVoiceInput.text = "??? Í£Ö¹Â¼Òô"
             btnVoiceInput.backgroundTintList = getColorStateList(android.R.color.holo_red_dark)
-            Toast.makeText(this, "è¯·è¯´è¯...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "ÇëËµ»°...", Toast.LENGTH_SHORT).show()
             LogActivity.addLog("SymptomInputActivity", "Recording started (PCM 16kHz)")
             
             Thread {
@@ -152,7 +152,7 @@ class SymptomInputActivity : AppCompatActivity() {
             }.start()
             
         } catch (e: Exception) {
-            Toast.makeText(this, "å½•éŸ³å¯åŠ¨å¤±è´¥: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Â¼ÒôÆô¶¯Ê§°Ü: ${e.message}", Toast.LENGTH_SHORT).show()
             LogActivity.addLog("SymptomInputActivity", "Recording error: ${e.message}")
         }
     }
@@ -166,7 +166,7 @@ class SymptomInputActivity : AppCompatActivity() {
             }
             audioRecord = null
             
-            btnVoiceInput.text = "ğŸ¤ è¯­éŸ³è¾“å…¥"
+            btnVoiceInput.text = "?? ÓïÒôÊäÈë"
             btnVoiceInput.backgroundTintList = getColorStateList(android.R.color.holo_orange_dark)
             
             val dataSize = pcmData?.size ?: 0
@@ -175,18 +175,18 @@ class SymptomInputActivity : AppCompatActivity() {
             if (dataSize > 0) {
                 recognizeSpeech()
             } else {
-                Toast.makeText(this, "å½•éŸ³æ•°æ®ä¸ºç©º", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Â¼ÒôÊı¾İÎª¿Õ", Toast.LENGTH_SHORT).show()
             }
             
         } catch (e: Exception) {
-            Toast.makeText(this, "åœæ­¢å½•éŸ³å¤±è´¥: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Í£Ö¹Â¼ÒôÊ§°Ü: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
     
     private fun recognizeSpeech() {
         lifecycleScope.launch {
             try {
-                Toast.makeText(this@SymptomInputActivity, "è¯†åˆ«ä¸­...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@SymptomInputActivity, "Ê¶±ğÖĞ...", Toast.LENGTH_SHORT).show()
                 
                 val result = withContext(Dispatchers.IO) {
                     callBaiduSpeechAPI()
@@ -195,18 +195,18 @@ class SymptomInputActivity : AppCompatActivity() {
                 if (result.isNotEmpty()) {
                     findViewById<EditText>(R.id.etSymptom).setText(result)
                     currentSymptom = result
-                    Toast.makeText(this@SymptomInputActivity, "è¯†åˆ«å®Œæˆï¼Œå¯ç‚¹å‡»AIåˆ†æè·å–å»ºè®®", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@SymptomInputActivity, "Ê¶±ğÍê³É£¬¿Éµã»÷AI·ÖÎö»ñÈ¡½¨Òé", Toast.LENGTH_SHORT).show()
                     LogActivity.addLog("SymptomInputActivity", "Recognition result: $result")
                     
-                    // æ˜¾ç¤ºAIåˆ†ææŒ‰é’®
+                    // ÏÔÊ¾AI·ÖÎö°´Å¥
                     btnAiAnalyze.visibility = android.view.View.VISIBLE
-                    btnAiAnalyze.text = "ğŸ¤– AIåˆ†æç—‡çŠ¶"
+                    btnAiAnalyze.text = "?? AI·ÖÎöÖ¢×´"
                     
                 } else {
-                    Toast.makeText(this@SymptomInputActivity, "æœªèƒ½è¯†åˆ«ï¼Œè¯·é‡è¯•", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@SymptomInputActivity, "Î´ÄÜÊ¶±ğ£¬ÇëÖØÊÔ", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@SymptomInputActivity, "è¯†åˆ«å¤±è´¥: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@SymptomInputActivity, "Ê¶±ğÊ§°Ü: ${e.message}", Toast.LENGTH_SHORT).show()
                 LogActivity.addLog("SymptomInputActivity", "Recognition error: ${e.message}")
             }
         }
@@ -273,89 +273,79 @@ class SymptomInputActivity : AppCompatActivity() {
     }
     
     /**
-     * AIåˆ†æç—‡çŠ¶ - æ¡†æ¶é¢„ç•™ï¼Œå¾…æ¥å…¥AIæ¨¡å‹
+     * AI·ÖÎöÖ¢×´ - ¿ò¼ÜÔ¤Áô£¬´ı½ÓÈëAIÄ£ĞÍ
      */
     private fun analyzeSymptomWithAI(symptom: String) {
-        Toast.makeText(this, "AIåˆ†æä¸­...", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "AI·ÖÎöÖĞ...", Toast.LENGTH_SHORT).show()
         btnAiAnalyze.isEnabled = false
-        btnAiAnalyze.text = "ğŸ¤– åˆ†æä¸­..."
+        btnAiAnalyze.text = "?? ·ÖÎöÖĞ..."
         
         lifecycleScope.launch {
             try {
                 val aiResult = withContext(Dispatchers.IO) {
-                    // TODO: æ¥å…¥AIæ¨¡å‹ï¼ˆç™¾åº¦æ–‡å¿ƒä¸€è¨€/é˜¿é‡Œé€šä¹‰åƒé—®/æœ¬åœ°æ¨¡å‹ç­‰ï¼‰
+                    // TODO: ½ÓÈëAIÄ£ĞÍ£¨°Ù¶ÈÎÄĞÄÒ»ÑÔ/°¢ÀïÍ¨ÒåÇ§ÎÊ/±¾µØÄ£ĞÍµÈ£©
                     callAIModel(symptom)
                 }
                 
-                // æ˜¾ç¤ºAIç»“æœ
+                // ÏÔÊ¾AI½á¹û
                 tvAiResult.text = aiResult
                 tvAiResult.visibility = android.view.View.VISIBLE
                 
-                // ä¿å­˜åˆ°æ—¥å¿—
+                // ±£´æµ½ÈÕÖ¾
                 saveAiAnalysisToLog(symptom, aiResult)
                 
-                Toast.makeText(this@SymptomInputActivity, "AIåˆ†æå®Œæˆ", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@SymptomInputActivity, "AI·ÖÎöÍê³É", Toast.LENGTH_SHORT).show()
                 LogActivity.addLog("SymptomInputActivity", "AI analysis completed")
                 
             } catch (e: Exception) {
-                Toast.makeText(this@SymptomInputActivity, "AIåˆ†æå¤±è´¥: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@SymptomInputActivity, "AI·ÖÎöÊ§°Ü: ${e.message}", Toast.LENGTH_SHORT).show()
                 LogActivity.addLog("SymptomInputActivity", "AI analysis error: ${e.message}")
             } finally {
                 btnAiAnalyze.isEnabled = true
-                btnAiAnalyze.text = "ğŸ¤– é‡æ–°åˆ†æ"
+                btnAiAnalyze.text = "?? ÖØĞÂ·ÖÎö"
             }
         }
     }
     
     /**
-     * è°ƒç”¨AIæ¨¡å‹ - å¾…å®ç°
-     * å¯é€‰é¡¹ï¼š
-     * 1. ç™¾åº¦æ–‡å¿ƒä¸€è¨€ API
-     * 2. é˜¿é‡Œé€šä¹‰åƒé—® API  
-     * 3. ç§‘å¤§è®¯é£æ˜Ÿç« API
-     * 4. æœ¬åœ°è½»é‡çº§æ¨¡å‹ï¼ˆå¦‚TinyLLMï¼‰
+     * µ÷ÓÃAIÄ£ĞÍ - ´ıÊµÏÖ
+     * ¿ÉÑ¡Ïî£º
+     * 1. °Ù¶ÈÎÄĞÄÒ»ÑÔ API
+     * 2. °¢ÀïÍ¨ÒåÇ§ÎÊ API  
+     * 3. ¿Æ´óÑ¶·ÉĞÇ»ğ API
+     * 4. ±¾µØÇáÁ¿¼¶Ä£ĞÍ£¨ÈçTinyLLM£©
      */
-    private fun callAIModel(symptom: String): String {
-        // TODO: å®ç°AIæ¨¡å‹è°ƒç”¨
-        // ä¸´æ—¶è¿”å›æ¨¡æ‹Ÿç»“æœï¼Œç”¨äºæµ‹è¯•æ¡†æ¶
-        return """
-            ã€AIå°±è¯Šå»ºè®®ã€‘ï¼ˆæ¨¡æ‹Ÿæ•°æ®ï¼‰
+    private suspend fun callAIModel(symptom: String): String {
+        // Ê¹ÓÃ±¾µØ AI ´óÄ£ĞÍ£¨Qwen2.5-0.5B£©
+        val aiHelper = LocalLLMHelper(this)
+        
+        // ³õÊ¼»¯Ä£ĞÍ£¨µÚÒ»´Î»á¸´ÖÆÎÄ¼ş£¬½ÏÂı£©
+        val initialized = aiHelper.initialize()
+        
+        if (!initialized) {
+            return "Ä£ĞÍ³õÊ¼»¯Ê§°Ü£¬Çë¼ì²éÄ£ĞÍÎÄ¼şÊÇ·ñ´æÔÚ"
+        }
+        
+        val patientName = MainActivity.idCardInfo?.name ?: ""
+        return aiHelper.analyzeSymptom(symptom, patientName)
+            ?? ÃâÔğÉùÃ÷£ºÒÔÉÏ½¨Òé½ö¹©²Î¿¼£¬²»ÄÜÌæ´ú×¨ÒµÒ½ÉúÕï¶Ï¡£
             
-            ç—‡çŠ¶ï¼š$symptom
-            
-            ğŸ” åˆæ­¥åˆ†æï¼š
-            æ ¹æ®ç—‡çŠ¶æè¿°ï¼Œå¯èƒ½æ˜¯ä¸Šå‘¼å¸é“æ„ŸæŸ“æˆ–æ™®é€šæ„Ÿå†’ã€‚
-            
-            ğŸ¥ å»ºè®®å°±è¯Šç§‘å®¤ï¼š
-            å‘¼å¸å†…ç§‘ æˆ– å…¨ç§‘åŒ»å­¦ç§‘
-            
-            âš ï¸ æ³¨æ„äº‹é¡¹ï¼š
-            1. å¤šä¼‘æ¯ï¼Œå¤šé¥®æ°´
-            2. å¦‚ç—‡çŠ¶æŒç»­3å¤©ä»¥ä¸Šæˆ–åŠ é‡ï¼Œè¯·åŠæ—¶å°±åŒ»
-            3. é¿å…è‡ªè¡Œæœç”¨æŠ—ç”Ÿç´ 
-            
-            ğŸ’Š ä¸´æ—¶ç¼“è§£å»ºè®®ï¼š
-            - é€‚å½“æœç”¨é€€çƒ§è¯ï¼ˆå¦‚ä½“æ¸©è¶…è¿‡38.5â„ƒï¼‰
-            - ä¿æŒå®¤å†…ç©ºæ°”æµé€š
-            
-            âš ï¸ å…è´£å£°æ˜ï¼šä»¥ä¸Šå»ºè®®ä»…ä¾›å‚è€ƒï¼Œä¸èƒ½æ›¿ä»£ä¸“ä¸šåŒ»ç”Ÿè¯Šæ–­ã€‚
-            
-            ã€å¾…æ¥å…¥çœŸå®AIæ¨¡å‹ã€‘
+            ¡¾´ı½ÓÈëÕæÊµAIÄ£ĞÍ¡¿
         """.trimIndent()
     }
     
     /**
-     * ä¿å­˜AIåˆ†æç»“æœåˆ°æ—¥å¿—
+     * ±£´æAI·ÖÎö½á¹ûµ½ÈÕÖ¾
      */
     private fun saveAiAnalysisToLog(symptom: String, aiResult: String) {
         val info = MainActivity.idCardInfo
         val logEntry = """
-            ã€AIå°±è¯Šå»ºè®®åˆ†æã€‘
-            æ‚£è€…ï¼š${info?.name ?: "æœªçŸ¥"}
-            ç—‡çŠ¶ï¼š$symptom
-            AIå»ºè®®ï¼š
+            ¡¾AI¾ÍÕï½¨Òé·ÖÎö¡¿
+            »¼Õß£º${info?.name ?: "Î´Öª"}
+            Ö¢×´£º$symptom
+            AI½¨Òé£º
             $aiResult
-            åˆ†ææ—¶é—´ï¼š${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.CHINA).format(java.util.Date())}
+            ·ÖÎöÊ±¼ä£º${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.CHINA).format(java.util.Date())}
             ====================
         """.trimIndent()
         
@@ -367,17 +357,17 @@ class SymptomInputActivity : AppCompatActivity() {
         
         val info = MainActivity.idCardInfo
         val logEntry = """
-            ã€ç—…ç—‡ä¿¡æ¯ä¿å­˜ã€‘
-            æ‚£è€…ï¼š${info?.name ?: "æœªçŸ¥"}
-            èº«ä»½è¯å·ï¼š${info?.idNumber ?: "æœªçŸ¥"}
-            ç—‡çŠ¶æè¿°ï¼š$symptom
-            AIå»ºè®®ï¼š${if(aiResult.isNotEmpty()) "å·²ç”Ÿæˆ" else "æœªåˆ†æ"}
-            è®°å½•æ—¶é—´ï¼š${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.CHINA).format(java.util.Date())}
+            ¡¾²¡Ö¢ĞÅÏ¢±£´æ¡¿
+            »¼Õß£º${info?.name ?: "Î´Öª"}
+            Éí·İÖ¤ºÅ£º${info?.idNumber ?: "Î´Öª"}
+            Ö¢×´ÃèÊö£º$symptom
+            AI½¨Òé£º${if(aiResult.isNotEmpty()) "ÒÑÉú³É" else "Î´·ÖÎö"}
+            ¼ÇÂ¼Ê±¼ä£º${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.CHINA).format(java.util.Date())}
             ====================
         """.trimIndent()
         
         LogActivity.addLog("SymptomSave", logEntry)
-        Toast.makeText(this, "ç—…ç—‡ä¿¡æ¯å·²ä¿å­˜", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "²¡Ö¢ĞÅÏ¢ÒÑ±£´æ", Toast.LENGTH_SHORT).show()
         
         val intent = Intent(this, MainActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
