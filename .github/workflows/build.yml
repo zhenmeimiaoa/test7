@@ -9,31 +9,40 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
-        
+
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
-      
+
     - name: Create local.properties with secrets
       run: |
         echo "aliyun.accessKeyId=${{ secrets.ALIYUN_ACCESS_KEY_ID }}" > local.properties
         echo "aliyun.accessKeySecret=${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}" >> local.properties
         cat local.properties
-      
+
+    - name: Download AI Model
+      run: |
+        mkdir -p app/src/main/assets
+        echo "Downloading Qwen2.5-0.5B model..."
+        curl -L -o app/src/main/assets/qwen2.5-0.5b-instruct-q4_k_m.gguf \
+          "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf" \
+          || echo "Model download failed, build will use fallback"
+        ls -lh app/src/main/assets/
+
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
-      
+
     - name: Build with Gradle
       run: ./gradlew assembleDebug
-      
+
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
