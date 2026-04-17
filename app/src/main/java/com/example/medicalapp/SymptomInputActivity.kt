@@ -1,4 +1,4 @@
-﻿package com.example.medicalapp
+package com.example.medicalapp
 
 import android.Manifest
 import android.content.Intent
@@ -316,32 +316,90 @@ class SymptomInputActivity : AppCompatActivity() {
      * 4. 本地轻量级模型（如TinyLLM）
      */
     private fun callAIModel(symptom: String): String {
-        // TODO: 实现AI模型调用
-        // 临时返回模拟结果，用于测试框架
-        return """
-            【AI就诊建议】（模拟数据）
+        return try {
+            val patientName = MainActivity.idCardInfo?.name ?: "未知"
             
-            症状：$symptom
+            val prompt = """请作为一位经验丰富的全科医生，根据以下患者信息给出就诊建议：
+
+患者姓名：$patientName
+症状描述：$symptom
+
+请按以下格式回复：
+🔍【可能病因】- 简要分析可能的病因（2-3种）
+🏥【推荐科室】- 建议就诊的科室
+⚠️【紧急程度】- 判断：🔴紧急/🟡尽快/🟢可观察
+💊【临时处理】- 就诊前可采取的缓解措施
+🚨【危险信号】- 如果出现以下情况请立即就医
+
+注意：以上建议仅供参考，不能替代医生面诊。"""
+
+            val jsonBody = org.json.JSONObject().apply {
+                put("model", WenxinAIConfig.MODEL)
+                put("messages", listOf(
+                    org.json.JSONObject().apply {
+                        put("role", "user")
+                        put("content", prompt)
+                    }
+                ))
+                put("temperature", 0.7)
+                put("max_tokens", 1024)
+            }
+
+            val requestBody = jsonBody.toString().toRequestBody("application/json".toMediaType())
+
+            val request = okhttp3.Request.Builder()
+                .url(WenxinAIConfig.CHAT_URL)
+                .header("Authorization", "Bearer ${WenxinAIConfig.API_KEY}")
+                .header("Content-Type", "application/json")
+                .post(requestBody)
+                .build()
+
+            val client = okhttp3.OkHttpClient.Builder()
+                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                .build()
+
+            val response = client.newCall(request).execute()
+            val responseBody = response.body?.string() ?: "{}"
+            val resultJson = org.json.JSONObject(responseBody)
+
+            if (resultJson.has("error")) {
+                throw Exception("API错误: ${resultJson.getJSONObject("error").optString("message")}")
+            }
+
+            val choices = resultJson.optJSONArray("choices")
+            if (choices != null && choices.length() > 0) {
+                val content = choices.getJSONObject(0).optJSONObject("message")?.optString("content", "")
+                if (!content.isNullOrEmpty()) {
+                    return content
+                }
+            }
             
-            🔍 初步分析：
-            根据症状描述，可能是上呼吸道感染或普通感冒。
+            "AI未返回有效内容"
             
-            🏥 建议就诊科室：
-            呼吸内科 或 全科医学科
-            
-            ⚠️ 注意事项：
-            1. 多休息，多饮水
-            2. 如症状持续3天以上或加重，请及时就医
-            3. 避免自行服用抗生素
-            
-            💊 临时缓解建议：
-            - 适当服用退烧药（如体温超过38.5℃）
-            - 保持室内空气流通
-            
-            ⚠️ 免责声明：以上建议仅供参考，不能替代专业医生诊断。
-            
-            【待接入真实AI模型】
-        """.trimIndent()
+        } catch (e: Exception) {
+            LogActivity.addLog("SymptomInputActivity", "AI API error: ${e.message}")
+            // 网络失败时返回模拟数据，确保功能可用
+            val patientName = MainActivity.idCardInfo?.name ?: "未知"
+            return """
+                【AI就诊建议】（网络异常，使用离线建议）
+                
+                患者：$patientName
+                症状：$symptom
+                
+                🔍 初步分析：
+                可能是上呼吸道感染或普通感冒。
+                
+                🏥 建议就诊科室：
+                呼吸内科 或 全科医学科
+                
+                ⚠️ 注意事项：
+                1. 多休息，多饮水
+                2. 如症状持续3天以上或加重，请及时就医
+                
+                💡 提示：网络异常，建议检查网络后重新分析。
+            """.trimIndent()
+        }
     }
     
     /**
