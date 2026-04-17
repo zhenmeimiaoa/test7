@@ -36,7 +36,8 @@ class SymptomInputActivity : AppCompatActivity() {
     private var pcmData: ByteArray? = null
     private var currentSymptom: String = ""
     
-    // 褰曢煶鍙傛暟 - 鐧惧害API瑕佹眰锛歅CM 16kHz 16bit 鍗曞０閬?    private val SAMPLE_RATE = 16000
+    // 录音参数 - 百度API要求：PCM 16kHz 16bit 单声道
+    private val SAMPLE_RATE = 16000
     private val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
     private val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
     
@@ -47,7 +48,7 @@ class SymptomInputActivity : AppCompatActivity() {
         LogActivity.addLog("SymptomInputActivity", "onCreate started")
         
         if (!MainActivity.isIdentityVerified) {
-            Toast.makeText(this, "璇峰厛瀹屾垚韬唤楠岃瘉", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "请先完成身份认证", Toast.LENGTH_LONG).show()
             finish()
             return
         }
@@ -61,11 +62,12 @@ class SymptomInputActivity : AppCompatActivity() {
         val btnBack = findViewById<Button>(R.id.btnBack)
         val btnLogs = findViewById<Button>(R.id.btnLogs)
         
-        // 鍒濆闅愯棌AI鍒嗘瀽鎸夐挳鍜岀粨鏋?        btnAiAnalyze.visibility = android.view.View.GONE
+        // 初始隐藏AI分析按钮和结果
+        btnAiAnalyze.visibility = android.view.View.GONE
         tvAiResult.visibility = android.view.View.GONE
         
         val info = MainActivity.idCardInfo
-        tvIdentityInfo.text = "褰撳墠鎮ｈ€咃細${info?.name ?: "鏈煡"}锛堝凡楠岃瘉锛?
+        tvIdentityInfo.text = "当前患者：${info?.name ?: "未知"}（已验证）"
         
         btnVoiceInput.setOnClickListener {
             if (isRecording) {
@@ -80,7 +82,7 @@ class SymptomInputActivity : AppCompatActivity() {
             if (symptom.isNotEmpty()) {
                 analyzeSymptomWithAI(symptom)
             } else {
-                Toast.makeText(this, "璇峰厛杈撳叆鎴栬瘑鍒棁鐘?, Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "请先输入或识别症状", Toast.LENGTH_SHORT).show()
             }
         }
         
@@ -88,7 +90,7 @@ class SymptomInputActivity : AppCompatActivity() {
             val symptom = etSymptom.text.toString().trim()
             val aiResult = tvAiResult.text.toString()
             if (symptom.isEmpty()) {
-                Toast.makeText(this, "璇峰厛杈撳叆鐥囩姸", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "请先输入症状", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             saveSymptom(symptom, aiResult)
@@ -121,7 +123,7 @@ class SymptomInputActivity : AppCompatActivity() {
             )
             
             if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
-                Toast.makeText(this, "褰曢煶鍒濆鍖栧け璐?, Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "录音初始化失败", Toast.LENGTH_SHORT).show()
                 return
             }
             
@@ -129,9 +131,9 @@ class SymptomInputActivity : AppCompatActivity() {
             isRecording = true
             audioRecord?.startRecording()
             
-            btnVoiceInput.text = "馃帣锔?鍋滄褰曢煶"
+            btnVoiceInput.text = "🛑 停止录音"
             btnVoiceInput.backgroundTintList = getColorStateList(android.R.color.holo_red_dark)
-            Toast.makeText(this, "璇疯璇?..", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "请说话...", Toast.LENGTH_SHORT).show()
             LogActivity.addLog("SymptomInputActivity", "Recording started (PCM 16kHz)")
             
             Thread {
@@ -150,7 +152,7 @@ class SymptomInputActivity : AppCompatActivity() {
             }.start()
             
         } catch (e: Exception) {
-            Toast.makeText(this, "褰曢煶鍚姩澶辫触: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "录音启动失败: ${e.message}", Toast.LENGTH_SHORT).show()
             LogActivity.addLog("SymptomInputActivity", "Recording error: ${e.message}")
         }
     }
@@ -164,7 +166,7 @@ class SymptomInputActivity : AppCompatActivity() {
             }
             audioRecord = null
             
-            btnVoiceInput.text = "馃帳 璇煶杈撳叆"
+            btnVoiceInput.text = "🎤 语音输入"
             btnVoiceInput.backgroundTintList = getColorStateList(android.R.color.holo_orange_dark)
             
             val dataSize = pcmData?.size ?: 0
@@ -173,18 +175,18 @@ class SymptomInputActivity : AppCompatActivity() {
             if (dataSize > 0) {
                 recognizeSpeech()
             } else {
-                Toast.makeText(this, "褰曢煶鏁版嵁涓虹┖", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "录音数据为空", Toast.LENGTH_SHORT).show()
             }
             
         } catch (e: Exception) {
-            Toast.makeText(this, "鍋滄褰曢煶澶辫触: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "停止录音失败: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
     
     private fun recognizeSpeech() {
         lifecycleScope.launch {
             try {
-                Toast.makeText(this@SymptomInputActivity, "璇嗗埆涓?..", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@SymptomInputActivity, "识别中...", Toast.LENGTH_SHORT).show()
                 
                 val result = withContext(Dispatchers.IO) {
                     callBaiduSpeechAPI()
@@ -193,18 +195,18 @@ class SymptomInputActivity : AppCompatActivity() {
                 if (result.isNotEmpty()) {
                     findViewById<EditText>(R.id.etSymptom).setText(result)
                     currentSymptom = result
-                    Toast.makeText(this@SymptomInputActivity, "璇嗗埆瀹屾垚锛屽彲鐐瑰嚮AI鍒嗘瀽鑾峰彇寤鸿", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@SymptomInputActivity, "识别完成，可点击AI分析获取建议", Toast.LENGTH_SHORT).show()
                     LogActivity.addLog("SymptomInputActivity", "Recognition result: $result")
                     
-                    // 鏄剧ずAI鍒嗘瀽鎸夐挳
+                    // 显示AI分析按钮
                     btnAiAnalyze.visibility = android.view.View.VISIBLE
-                    btnAiAnalyze.text = "馃 AI鍒嗘瀽鐥囩姸"
+                    btnAiAnalyze.text = "🤖 AI分析症状"
                     
                 } else {
-                    Toast.makeText(this@SymptomInputActivity, "鏈兘璇嗗埆锛岃閲嶈瘯", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@SymptomInputActivity, "未能识别，请重试", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@SymptomInputActivity, "璇嗗埆澶辫触: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@SymptomInputActivity, "识别失败: ${e.message}", Toast.LENGTH_SHORT).show()
                 LogActivity.addLog("SymptomInputActivity", "Recognition error: ${e.message}")
             }
         }
@@ -271,65 +273,73 @@ class SymptomInputActivity : AppCompatActivity() {
     }
     
     /**
-     * AI鍒嗘瀽鐥囩姸 - 妗嗘灦棰勭暀锛屽緟鎺ュ叆AI妯″瀷
+     * AI分析症状 - 框架预留，待接入AI模型
      */
     private fun analyzeSymptomWithAI(symptom: String) {
-        Toast.makeText(this, "AI鍒嗘瀽涓?..", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "AI分析中...", Toast.LENGTH_SHORT).show()
         btnAiAnalyze.isEnabled = false
-        btnAiAnalyze.text = "馃 鍒嗘瀽涓?.."
+        btnAiAnalyze.text = "🤖 分析中..."
         
         lifecycleScope.launch {
             try {
                 val aiResult = withContext(Dispatchers.IO) {
-                    // TODO: 鎺ュ叆AI妯″瀷锛堢櫨搴︽枃蹇冧竴瑷€/闃块噷閫氫箟鍗冮棶/鏈湴妯″瀷绛夛級
                     callAIModel(symptom)
                 }
                 
-                // 鏄剧ずAI缁撴灉
+                // 显示AI结果
                 tvAiResult.text = aiResult
                 tvAiResult.visibility = android.view.View.VISIBLE
                 
-                // 淇濆瓨鍒版棩蹇?                saveAiAnalysisToLog(symptom, aiResult)
+                // 保存到日志
+                saveAiAnalysisToLog(symptom, aiResult)
                 
-                Toast.makeText(this@SymptomInputActivity, "AI鍒嗘瀽瀹屾垚", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@SymptomInputActivity, "AI分析完成", Toast.LENGTH_SHORT).show()
                 LogActivity.addLog("SymptomInputActivity", "AI analysis completed")
                 
             } catch (e: Exception) {
-                Toast.makeText(this@SymptomInputActivity, "AI鍒嗘瀽澶辫触: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@SymptomInputActivity, "AI分析失败: ${e.message}", Toast.LENGTH_SHORT).show()
                 LogActivity.addLog("SymptomInputActivity", "AI analysis error: ${e.message}")
             } finally {
                 btnAiAnalyze.isEnabled = true
-                btnAiAnalyze.text = "馃 閲嶆柊鍒嗘瀽"
+                btnAiAnalyze.text = "🤖 重新分析"
             }
         }
     }
     
     /**
-     * 璋冪敤AI妯″瀷 - 寰呭疄鐜?     * 鍙€夐」锛?     * 1. 鐧惧害鏂囧績涓€瑷€ API
-     * 2. 闃块噷閫氫箟鍗冮棶 API  
-     * 3. 绉戝ぇ璁鏄熺伀 API
-     * 4. 鏈湴杞婚噺绾фā鍨嬶紙濡俆inyLLM锛?     */
+     * 调用AI模型 - 百度文心一言 ERNIE 4.5 Turbo
+     */
     private fun callAIModel(symptom: String): String {
         return try {
-            val patientName = MainActivity.idCardInfo?.name ?: "鏈煡"
+            val patientName = MainActivity.idCardInfo?.name ?: "未知"
             
-            val prompt = """璇蜂綔涓轰竴浣嶇粡楠屼赴瀵岀殑鍏ㄧ鍖荤敓锛屾牴鎹互涓嬫偅鑰呬俊鎭粰鍑哄氨璇婂缓璁細
+            val prompt = """请作为一位经验丰富的全科医生，根据以下患者信息给出就诊建议：
 
-鎮ｈ€呭鍚嶏細$patientName
-鐥囩姸鎻忚堪锛?symptom
+患者姓名：$patientName
+症状描述：$symptom
 
-璇锋寜浠ヤ笅鏍煎紡鍥炲锛?馃攳銆愬彲鑳界梾鍥犮€? 绠€瑕佸垎鏋愬彲鑳界殑鐥呭洜锛?-3绉嶏級
-馃彞銆愭帹鑽愮瀹ゃ€? 寤鸿灏辫瘖鐨勭瀹?鈿狅笍銆愮揣鎬ョ▼搴︺€? 鍒ゆ柇锛氿煍寸揣鎬?馃煛灏藉揩/馃煝鍙瀵?馃拪銆愪复鏃跺鐞嗐€? 灏辫瘖鍓嶅彲閲囧彇鐨勭紦瑙ｆ帾鏂?馃毃銆愬嵄闄╀俊鍙枫€? 濡傛灉鍑虹幇浠ヤ笅鎯呭喌璇风珛鍗冲氨鍖?
-娉ㄦ剰锛氫互涓婂缓璁粎渚涘弬鑰冿紝涓嶈兘鏇夸唬鍖荤敓闈㈣瘖銆?""
+请按以下格式回复：
+🔍【可能病因】- 简要分析可能的病因（2-3种）
+🏥【推荐科室】- 建议就诊的科室
+⚠️【紧急程度】- 判断：🔴紧急/🟡尽快/🟢可观察
+💊【临时处理】- 就诊前可采取的缓解措施
+🚨【危险信号】- 如果出现以下情况请立即就医
+
+注意：以上建议仅供参考，不能替代医生面诊。"""
+
+            // 创建 messages 数组 - 使用 JSONArray 而不是 listOf
+            val messageObj = org.json.JSONObject().apply {
+                put("role", "user")
+                put("content", prompt)
+            }
+            
+            val messagesArray = org.json.JSONArray().apply {
+                put(messageObj)
+            }
 
             val jsonBody = org.json.JSONObject().apply {
                 put("model", WenxinAIConfig.MODEL)
-                put("messages", listOf(
-                    org.json.JSONObject().apply {
-                        put("role", "user")
-                        put("content", prompt)
-                    }
-                ))
+                put("messages", messagesArray)
                 put("temperature", 0.7)
                 put("max_tokens", 1024)
             }
@@ -353,7 +363,7 @@ class SymptomInputActivity : AppCompatActivity() {
             val resultJson = org.json.JSONObject(responseBody)
 
             if (resultJson.has("error")) {
-                throw Exception("API閿欒: ${resultJson.getJSONObject("error").optString("message")}")
+                throw Exception("API错误: ${resultJson.getJSONObject("error").optString("message")}")
             }
 
             val choices = resultJson.optJSONArray("choices")
@@ -364,35 +374,45 @@ class SymptomInputActivity : AppCompatActivity() {
                 }
             }
             
-            "AI鏈繑鍥炴湁鏁堝唴瀹?
+            "AI未返回有效内容"
             
         } catch (e: Exception) {
             LogActivity.addLog("SymptomInputActivity", "AI API error: ${e.message}")
-            // 缃戠粶澶辫触鏃惰繑鍥炴ā鎷熸暟鎹紝纭繚鍔熻兘鍙敤
-            val patientName = MainActivity.idCardInfo?.name ?: "鏈煡"
+            // 网络失败时返回模拟数据，确保功能可用
+            val patientName = MainActivity.idCardInfo?.name ?: "未知"
             return """
-                銆怉I灏辫瘖寤鸿銆戯紙缃戠粶寮傚父锛屼娇鐢ㄧ绾垮缓璁級
+                【AI就诊建议】（网络异常，使用离线建议）
                 
-                鎮ｈ€咃細$patientName
-                鐥囩姸锛?symptom
+                患者：$patientName
+                症状：$symptom
                 
-                馃攳 鍒濇鍒嗘瀽锛?                鍙兘鏄笂鍛煎惛閬撴劅鏌撴垨鏅€氭劅鍐掋€?                
-                馃彞 寤鸿灏辫瘖绉戝锛?                鍛煎惛鍐呯 鎴?鍏ㄧ鍖诲绉?                
-                鈿狅笍 娉ㄦ剰浜嬮」锛?                1. 澶氫紤鎭紝澶氶ギ姘?                2. 濡傜棁鐘舵寔缁?澶╀互涓婃垨鍔犻噸锛岃鍙婃椂灏卞尰
+                🔍 初步分析：
+                可能是上呼吸道感染或普通感冒。
                 
-                馃挕 鎻愮ず锛氱綉缁滃紓甯革紝寤鸿妫€鏌ョ綉缁滃悗閲嶆柊鍒嗘瀽銆?            """.trimIndent()
+                🏥 建议就诊科室：
+                呼吸内科 或 全科医学科
+                
+                ⚠️ 注意事项：
+                1. 多休息，多饮水
+                2. 如症状持续3天以上或加重，请及时就医
+                
+                💡 提示：网络异常，建议检查网络后重新分析。
+            """.trimIndent()
         }
     }
     
     /**
-     * 淇濆瓨AI鍒嗘瀽缁撴灉鍒版棩蹇?     */
+     * 保存AI分析结果到日志
+     */
     private fun saveAiAnalysisToLog(symptom: String, aiResult: String) {
         val info = MainActivity.idCardInfo
         val logEntry = """
-            銆怉I灏辫瘖寤鸿鍒嗘瀽銆?            鎮ｈ€咃細${info?.name ?: "鏈煡"}
-            鐥囩姸锛?symptom
-            AI寤鸿锛?            $aiResult
-            鍒嗘瀽鏃堕棿锛?{java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.CHINA).format(java.util.Date())}
+            【AI就诊建议分析】
+            患者：${info?.name ?: "未知"}
+            症状：$symptom
+            AI建议：
+            $aiResult
+            分析时间：${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.CHINA).format(java.util.Date())}
             ====================
         """.trimIndent()
         
@@ -404,16 +424,17 @@ class SymptomInputActivity : AppCompatActivity() {
         
         val info = MainActivity.idCardInfo
         val logEntry = """
-            銆愮梾鐥囦俊鎭繚瀛樸€?            鎮ｈ€咃細${info?.name ?: "鏈煡"}
-            韬唤璇佸彿锛?{info?.idNumber ?: "鏈煡"}
-            鐥囩姸鎻忚堪锛?symptom
-            AI寤鸿锛?{if(aiResult.isNotEmpty()) "宸茬敓鎴? else "鏈垎鏋?}
-            璁板綍鏃堕棿锛?{java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.CHINA).format(java.util.Date())}
+            【病症信息保存】
+            患者：${info?.name ?: "未知"}
+            身份证号：${info?.idNumber ?: "未知"}
+            症状描述：$symptom
+            AI建议：${if(aiResult.isNotEmpty()) "已生成" else "未分析"}
+            记录时间：${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.CHINA).format(java.util.Date())}
             ====================
         """.trimIndent()
         
         LogActivity.addLog("SymptomSave", logEntry)
-        Toast.makeText(this, "鐥呯棁淇℃伅宸蹭繚瀛?, Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "病症信息已保存", Toast.LENGTH_SHORT).show()
         
         val intent = Intent(this, MainActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
