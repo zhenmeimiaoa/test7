@@ -33,6 +33,7 @@ class SymptomInputActivity : AppCompatActivity() {
     private lateinit var btnVoiceInput: Button
     private lateinit var btnAiAnalyze: Button
     private lateinit var tvAiResult: TextView
+    private lateinit var scrollAiResult: android.widget.ScrollView
     private var pcmData: ByteArray? = null
     private var currentSymptom: String = ""
     
@@ -58,16 +59,30 @@ class SymptomInputActivity : AppCompatActivity() {
         btnVoiceInput = findViewById<Button>(R.id.btnVoiceInput)
         btnAiAnalyze = findViewById<Button>(R.id.btnAiAnalyze)
         tvAiResult = findViewById<TextView>(R.id.tvAiResult)
+        scrollAiResult = findViewById<android.widget.ScrollView>(R.id.scrollAiResult)
         val btnSave = findViewById<Button>(R.id.btnSave)
         val btnBack = findViewById<Button>(R.id.btnBack)
         val btnLogs = findViewById<Button>(R.id.btnLogs)
         
         // 初始隐藏AI分析按钮和结果
         btnAiAnalyze.visibility = android.view.View.GONE
-        tvAiResult.visibility = android.view.View.GONE
+        scrollAiResult.visibility = android.view.View.GONE
         
         val info = MainActivity.idCardInfo
         tvIdentityInfo.text = "当前患者：${info?.name ?: "未知"}（已验证）"
+        
+        // 监听症状输入框变化，有内容就显示AI按钮（支持打字输入）
+        etSymptom.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val hasText = !s.isNullOrBlank()
+                btnAiAnalyze.visibility = if (hasText) android.view.View.VISIBLE else android.view.View.GONE
+                if (hasText) {
+                    btnAiAnalyze.text = "🤖 AI分析症状"
+                }
+            }
+        })
         
         btnVoiceInput.setOnClickListener {
             if (isRecording) {
@@ -288,7 +303,7 @@ class SymptomInputActivity : AppCompatActivity() {
                 
                 // 显示AI结果
                 tvAiResult.text = aiResult
-                tvAiResult.visibility = android.view.View.VISIBLE
+                scrollAiResult.visibility = android.view.View.VISIBLE
                 
                 // 保存到日志
                 saveAiAnalysisToLog(symptom, aiResult)
