@@ -150,13 +150,18 @@ class JiandaoyunApiHelper {
                 val responseBody = response.body?.string() ?: "{}"
                 val result = JSONObject(responseBody)
                 
-                val recordId = result.optString("_id", "")
-                    .ifEmpty { result.optJSONObject("data")?.optString("_id", "") }
+                var recordId = result.optString("_id", "")
+                if (recordId.isEmpty()) {
+                    val dataObj = result.optJSONObject("data")
+                    if (dataObj != null) {
+                        recordId = dataObj.optString("_id", "")
+                    }
+                }
                 
                 if (recordId.isNotEmpty()) {
                     Result.success(recordId)
                 } else {
-                    Result.failure(Exception("创建失败: "))
+                    Result.failure(Exception("创建失败: $responseBody"))
                 }
             }
             
@@ -198,13 +203,18 @@ class JiandaoyunApiHelper {
                 val responseBody = response.body?.string() ?: "{}"
                 val result = JSONObject(responseBody)
                 
-                val recordId = result.optString("_id", "")
-                    .ifEmpty { result.optJSONObject("data")?.optString("_id", "") }
+                var recordId = result.optString("_id", "")
+                if (recordId.isEmpty()) {
+                    val dataObj = result.optJSONObject("data")
+                    if (dataObj != null) {
+                        recordId = dataObj.optString("_id", "")
+                    }
+                }
                 
                 if (recordId.isNotEmpty()) {
                     Result.success(recordId)
                 } else {
-                    Result.failure(Exception("创建失败: "))
+                    Result.failure(Exception("创建失败: $responseBody"))
                 }
             }
             
