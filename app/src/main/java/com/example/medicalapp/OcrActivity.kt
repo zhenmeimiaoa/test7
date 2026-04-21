@@ -82,18 +82,18 @@ class OcrActivity : AppCompatActivity() {
                 }
                 
                 capturedBitmap = bitmap
-
+                
                 // 保存到文件供简道云上传
                 try {
                     val idCardFile = File(cacheDir, "id_card_image.jpg")
                     FileOutputStream(idCardFile).use { out ->
                         bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
                     }
-                    LogActivity.addLog("OcrActivity", "ID card saved to ")
+                    LogActivity.addLog("OcrActivity", "ID card saved to ${idCardFile.absolutePath}")
                 } catch (e: Exception) {
-                    LogActivity.addLog("OcrActivity", "Save failed: ")
+                    LogActivity.addLog("OcrActivity", "Save failed: ${e.message}")
                 }
-
+                
                 findViewById<ImageView>(R.id.ivIdCard).setImageBitmap(bitmap)
                 
                 val info = withContext(Dispatchers.IO) { performOCR(bitmap) }
@@ -205,5 +205,3 @@ class OcrActivity : AppCompatActivity() {
         startActivity(Intent(this, FaceVerifyActivity::class.java))
     }
 }
-
-

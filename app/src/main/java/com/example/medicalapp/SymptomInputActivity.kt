@@ -451,10 +451,45 @@ class SymptomInputActivity : AppCompatActivity() {
         LogActivity.addLog("SymptomSave", logEntry)
         Toast.makeText(this, "病症信息已保存", Toast.LENGTH_SHORT).show()
         
+        // 同步到简道云
+        syncToJiandaoyun(symptom, aiResult)
+        
         val intent = Intent(this, MainActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
         startActivity(intent)
         finish()
+    }
+    
+    /**
+     * 同步问诊记录到简道云
+     */
+    private fun syncToJiandaoyun(symptom: String, aiResult: String) {
+        val info = MainActivity.idCardInfo ?: return
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val helper = JiandaoyunApiHelper()
+
+                val result = helper.createMedicalRecord(
+                    name = info.name,
+                    symptom = symptom,
+                    aiAdvice = aiResult
+                )
+
+                withContext(Dispatchers.Main) {
+                    result.fold(
+                        onSuccess = { recordId ->
+                            LogActivity.addLog("Jiandaoyun", "问诊记录已同步，记录ID: $recordId")
+                        },
+                        onFailure = { error ->
+                            LogActivity.addLog("Jiandaoyun", "问诊记录同步失败: ${error.message}")
+                        }
+                    )
+                }
+            } catch (e: Exception) {
+                LogActivity.addLog("Jiandaoyun", "同步异常: ${e.message}")
+            }
+        }
     }
     
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {

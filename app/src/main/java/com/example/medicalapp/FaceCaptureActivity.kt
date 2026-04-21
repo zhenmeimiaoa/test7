@@ -19,9 +19,7 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.FileOutputStream
-import java.util.concurrent.Executorservice
-import java.io.File
-import java.io.FileOutputStream
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class FaceCaptureActivity : AppCompatActivity() {
@@ -35,7 +33,8 @@ class FaceCaptureActivity : AppCompatActivity() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     
     companion object {
-        // 闈欐€佸彉閲忎紶閫?Bitmap锛堥伩鍏?Intent 澶у皬闄愬埗锛?        var capturedFaceBitmap: Bitmap? = null
+        // 静态变量传递 Bitmap（避免 Intent 大小限制）
+        var capturedFaceBitmap: Bitmap? = null
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,7 +47,7 @@ class FaceCaptureActivity : AppCompatActivity() {
         
         cameraExecutor = Executors.newSingleThreadExecutor()
         
-        // 娓呯┖涔嬪墠鐨?Bitmap
+        // 清空之前的 Bitmap
         capturedFaceBitmap = null
         
         if (checkPermissions()) {
@@ -114,10 +113,10 @@ class FaceCaptureActivity : AppCompatActivity() {
                             val bytes = ByteArray(buffer.remaining())
                             buffer.get(bytes)
                             
-                            // 鍘嬬缉鍥剧墖閬垮厤鍐呭瓨闂
+                            // 压缩图片避免内存问题
                             val bitmap = withContext(Dispatchers.Default) {
                                 val original = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                                // 鍘嬬缉鍒?640x480 宸﹀彸
+                                // 压缩到 640x480 左右
                                 val scaled = Bitmap.createScaledBitmap(original, 640, 480, true)
                                 if (original != scaled) original.recycle()
                                 scaled
@@ -125,7 +124,19 @@ class FaceCaptureActivity : AppCompatActivity() {
                             
                             image.close()
                             
-                            // 淇濆瓨鍒伴潤鎬佸彉閲?                            capturedFaceBitmap = bitmap
+                            // 保存到静态变量
+                            capturedFaceBitmap = bitmap
+                            
+                            // 保存到文件供简道云上传
+                            try {
+                                val faceFile = File(cacheDir, "face_image.jpg")
+                                FileOutputStream(faceFile).use { out ->
+                                    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+                                }
+                                LogActivity.addLog("FaceCapture", "Face saved to ${faceFile.absolutePath}")
+                            } catch (e: Exception) {
+                                LogActivity.addLog("FaceCapture", "Save failed: ${e.message}")
+                            }
                             
                             withContext(Dispatchers.Main) {
                                 setResult(RESULT_OK)

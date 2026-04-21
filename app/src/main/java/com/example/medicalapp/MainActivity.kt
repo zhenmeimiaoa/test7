@@ -64,13 +64,11 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         // 更新按钮状态显示
         updateButtonStatus()
-
+        
         // 如果身份已验证，同步到简道云
         if (isIdentityVerified) {
             syncPatientToJiandaoyun()
-        } else {
-            // 未验证，不同步
-        }()
+        }
     }
     
     private fun updateButtonStatus() {
@@ -83,7 +81,7 @@ class MainActivity : AppCompatActivity() {
             btnSymptomAnalysis.backgroundTintList = getColorStateList(android.R.color.darker_gray)
         }
     }
-
+    
     /**
      * 同步患者信息到简道云
      */
@@ -111,16 +109,16 @@ class MainActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     result.fold(
                         onSuccess = { recordId ->
-                            LogActivity.addLog("Jiandaoyun", "患者信息已同步，记录ID: ")
+                            LogActivity.addLog("Jiandaoyun", "患者信息已同步，记录ID: $recordId")
                             Toast.makeText(this@MainActivity, "身份信息已云端备份", Toast.LENGTH_SHORT).show()
                         },
                         onFailure = { error ->
-                            LogActivity.addLog("Jiandaoyun", "同步失败: ")
+                            LogActivity.addLog("Jiandaoyun", "同步失败: ${error.message}")
                         }
                     )
                 }
             } catch (e: Exception) {
-                LogActivity.addLog("Jiandaoyun", "同步异常: ")
+                LogActivity.addLog("Jiandaoyun", "同步异常: ${e.message}")
             }
         }
     }
