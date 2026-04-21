@@ -1,4 +1,4 @@
-﻿package com.example.medicalapp
+package com.example.medicalapp
 
 import android.content.Intent
 import android.graphics.Bitmap
@@ -6,6 +6,11 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
     
@@ -59,6 +64,11 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         // 更新按钮状态显示
         updateButtonStatus()
+
+        // 如果身份已验证，同步到简道云
+        if (isIdentityVerified) {
+            syncPatientToJiandaoyun()
+        }()
     }
     
     private fun updateButtonStatus() {
@@ -69,6 +79,47 @@ class MainActivity : AppCompatActivity() {
         } else {
             btnSymptomAnalysis.text = "病症分析（需先验证身份）"
             btnSymptomAnalysis.backgroundTintList = getColorStateList(android.R.color.darker_gray)
+        }
+    }
+
+    /**
+     * 同步患者信息到简道云
+     */
+    private fun syncPatientToJiandaoyun() {
+        val info = idCardInfo ?: return
+        if (!isIdentityVerified) return
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val helper = JiandaoyunApiHelper()
+
+                val idCardImageFile = File(cacheDir, "id_card_image.jpg")
+                val faceImageFile = File(cacheDir, "face_image.jpg")
+
+                val result = helper.createPatient(
+                    name = info.name,
+                    idCard = info.idNumber,
+                    gender = info.gender,
+                    address = info.address,
+                    faceSimilarity = faceCompareScore.toFloat(),
+                    idCardImage = if (idCardImageFile.exists()) idCardImageFile else null,
+                    faceImage = if (faceImageFile.exists()) faceImageFile else null
+                )
+
+                withContext(Dispatchers.Main) {
+                    result.fold(
+                        onSuccess = { recordId ->
+                            LogActivity.addLog("Jiandaoyun", "患者信息已同步，记录ID: ")
+                            Toast.makeText(this@MainActivity, "身份信息已云端备份", Toast.LENGTH_SHORT).show()
+                        },
+                        onFailure = { error ->
+                            LogActivity.addLog("Jiandaoyun", "同步失败: ")
+                        }
+                    )
+                }
+            } catch (e: Exception) {
+                LogActivity.addLog("Jiandaoyun", "同步异常: ")
+            }
         }
     }
 }

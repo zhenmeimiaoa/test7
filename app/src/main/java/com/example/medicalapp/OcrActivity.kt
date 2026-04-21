@@ -1,4 +1,4 @@
-﻿package com.example.medicalapp
+package com.example.medicalapp
 
 import android.content.Intent
 import android.graphics.Bitmap
@@ -21,6 +21,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
 
 class OcrActivity : AppCompatActivity() {
     
@@ -80,6 +82,18 @@ class OcrActivity : AppCompatActivity() {
                 }
                 
                 capturedBitmap = bitmap
+
+                // 保存到文件供简道云上传
+                try {
+                    val idCardFile = File(cacheDir, "id_card_image.jpg")
+                    FileOutputStream(idCardFile).use { out ->
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+                    }
+                    LogActivity.addLog("OcrActivity", "ID card saved to ")
+                } catch (e: Exception) {
+                    LogActivity.addLog("OcrActivity", "Save failed: ")
+                }
+
                 findViewById<ImageView>(R.id.ivIdCard).setImageBitmap(bitmap)
                 
                 val info = withContext(Dispatchers.IO) { performOCR(bitmap) }
