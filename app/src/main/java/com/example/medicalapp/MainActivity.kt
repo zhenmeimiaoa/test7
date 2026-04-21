@@ -68,6 +68,8 @@ class MainActivity : AppCompatActivity() {
         // 如果身份已验证，同步到简道云
         if (isIdentityVerified) {
             syncPatientToJiandaoyun()
+        } else {
+            // 未验证，不同步
         }()
     }
     
