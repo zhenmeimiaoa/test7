@@ -23,6 +23,9 @@ class MainActivity : AppCompatActivity() {
         
         // 病症信息
         var symptomText: String = ""
+        
+        // 简道云同步标记 - 防止重复同步
+        var isSyncedToJiandaoyun: Boolean = false
     }
     
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,6 +41,8 @@ class MainActivity : AppCompatActivity() {
         // 按钮一：身份验证
         btnIdentityVerify.setOnClickListener {
             LogActivity.addLog("MainActivity", "Identity verify button clicked")
+            // 重置同步标记，允许重新验证后再次同步
+            isSyncedToJiandaoyun = false
             startActivity(Intent(this, IdentityMethodActivity::class.java))
         }
         
@@ -65,8 +70,8 @@ class MainActivity : AppCompatActivity() {
         // 更新按钮状态显示
         updateButtonStatus()
         
-        // 如果身份已验证，同步到简道云
-        if (isIdentityVerified) {
+        // 如果身份已验证且未同步过，同步到简道云
+        if (isIdentityVerified && !isSyncedToJiandaoyun) {
             syncPatientToJiandaoyun()
         }
     }
@@ -109,6 +114,8 @@ class MainActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     result.fold(
                         onSuccess = { recordId ->
+                            // 标记已同步，防止重复写入
+                            isSyncedToJiandaoyun = true
                             LogActivity.addLog("Jiandaoyun", "患者信息已同步，记录ID: $recordId")
                             Toast.makeText(this@MainActivity, "身份信息已云端备份", Toast.LENGTH_SHORT).show()
                         },
